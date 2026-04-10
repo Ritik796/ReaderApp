@@ -1,6 +1,7 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
   Image,
+  InteractionManager,
   Linking,
   Modal,
   PermissionsAndroid,
@@ -547,8 +548,10 @@ export default function MapScreen({route, navigation}) {
 
   useFocusEffect(
     useCallback(() => {
-      loadMapData();
-      return undefined;
+      const task = InteractionManager.runAfterInteractions(() => {
+        loadMapData();
+      });
+      return () => task.cancel();
     }, [loadMapData]),
   );
 
@@ -660,6 +663,7 @@ export default function MapScreen({route, navigation}) {
             showsUserLocation={false}
             mapType="standard">
             <Polyline
+              key={`poly-line-${currentLine}`}
               coordinates={currentLinePoints}
               strokeColor={appTheme.colors.accentPrimary}
               strokeWidth={4}

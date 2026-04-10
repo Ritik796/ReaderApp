@@ -127,6 +127,13 @@ function LauncherScreen({navigation}) {
             },
             onError: error => {
               showToast('warning', error?.message || 'Update check could not be completed.');
+              hideUpdateModal();
+              // Prevent screen from getting stuck if download fails
+              navigateTimerRef.current = setTimeout(() => {
+                if (!cancelled) {
+                  navigation.replace('Login');
+                }
+              }, 1200);
             },
           },
           null,
