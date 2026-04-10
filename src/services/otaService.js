@@ -51,7 +51,7 @@ const fetchReleaseData = async token => {
       throw new Error('Unable to verify updates right now. Please contact admin.');
     }
     if (response.status === 404) {
-      throw new Error('Update package not found. Please contact admin.');
+      return null;
     }
     throw new Error('Unable to check for updates right now. Please try again shortly.');
   }
@@ -74,6 +74,9 @@ export const checkForUpdates = async (callbacks = {}, runtimeConfig = null, opti
     const installedAppVersion = normalizeVersion(DeviceInfo.getVersion());
 
     const releaseData = await fetchReleaseData(gitAccessToken);
+    if (!releaseData) {
+      return false;
+    }
     const latestVersion = releaseData.tag_name;
     const normalizedLatestVersion = normalizeVersion(latestVersion);
     if (!normalizedLatestVersion) {
