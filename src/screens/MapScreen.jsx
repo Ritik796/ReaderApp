@@ -45,7 +45,7 @@ const WATCH_OPTIONS = {
   interval: 8000,
   fastestInterval: 5000,
   timeout: 20000,
-  maximumAge: 5000,
+  maximumAge: 1000,
 };
 
 const CURRENT_POSITION_OPTIONS = {
@@ -116,7 +116,6 @@ function InfoRow({icon, label, value}) {
 export default function MapScreen({route, navigation}) {
   const mapRef = useRef(null);
   const locationWatchIdRef = useRef(null);
-  const hasCenteredOnNativeLocationRef = useRef(false);
   const userLocationRef = useRef(null);
   const isInitialLocationSettledRef = useRef(false);
   const locationIssueShownRef = useRef(false);
@@ -157,42 +156,6 @@ export default function MapScreen({route, navigation}) {
       helperId,
     };
   }, [route?.params]);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const restoreLastUserLocation = async () => {
-      try {
-        const raw = await AsyncStorage.getItem(LAST_USER_LOCATION_KEY);
-        if (!isMounted || !raw) return;
-
-        const parsed = JSON.parse(raw);
-        const latitude = Number(parsed?.latitude);
-        const longitude = Number(parsed?.longitude);
-        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
-          return;
-        }
-
-        const restored = {latitude, longitude};
-        userLocationRef.current = restored;
-        setUserLocation(restored);
-        userAnimatedCoordinate.setValue({
-          latitude,
-          longitude,
-        });
-        hasAnimatedToUserRef.current = true;
-        animateToLocation(restored);
-      } catch (_error) {
-        // best effort restore only
-      }
-    };
-
-    restoreLastUserLocation();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [animateToLocation, userAnimatedCoordinate]);
 
   const currentLineData = wardLines[activeLineIndex] || null;
   const allWardHouses = useMemo(
@@ -291,6 +254,42 @@ export default function MapScreen({route, navigation}) {
     };
     mapRef.current?.animateToRegion(region, 450);
   }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const restoreLastUserLocation = async () => {
+      try {
+        const raw = await AsyncStorage.getItem(LAST_USER_LOCATION_KEY);
+        if (!isMounted || !raw) return;
+
+        const parsed = JSON.parse(raw);
+        const latitude = Number(parsed?.latitude);
+        const longitude = Number(parsed?.longitude);
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+          return;
+        }
+
+        const restored = {latitude, longitude};
+        userLocationRef.current = restored;
+        setUserLocation(restored);
+        userAnimatedCoordinate.setValue({
+          latitude,
+          longitude,
+        });
+        hasAnimatedToUserRef.current = true;
+        animateToLocation(restored);
+      } catch (_error) {
+        // best effort restore only
+      }
+    };
+
+    restoreLastUserLocation();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [animateToLocation, userAnimatedCoordinate]);
 
   const onCenterLocation = () => {
     if (!userLocation) {
@@ -399,7 +398,7 @@ export default function MapScreen({route, navigation}) {
   ]);
 
   const updateLocation = useCallback(coords => {
-    if (!coords?.latitude || !coords?.longitude) return;
+    if (coords?.latitude == null || coords?.longitude == null) return;
     const next = {
       latitude: Number(coords.latitude),
       longitude: Number(coords.longitude),
@@ -659,15 +658,6 @@ export default function MapScreen({route, navigation}) {
             toolbarEnabled={false}
             showsMyLocationButton={false}
             showsUserLocation={false}
-            onUserLocationChange={event => {
-              const coordinate = event?.nativeEvent?.coordinate;
-              if (!coordinate?.latitude || !coordinate?.longitude) return;
-              updateLocation(coordinate);
-              if (!hasCenteredOnNativeLocationRef.current) {
-                hasCenteredOnNativeLocationRef.current = true;
-                animateToLocation(coordinate);
-              }
-            }}
             mapType="standard">
             <Polyline
               coordinates={currentLinePoints}
