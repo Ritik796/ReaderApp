@@ -11,7 +11,7 @@ const HISAR_CONFIG = {
 
 export const HISAR_CITY = {
   cityName: 'Bharatpur',
-  city: 'bharatpur',
+  city: 'Bharatpur',
   key: 'BTPR',
   dbPath: `${HISAR_CONFIG.databaseURL}/`,
   empCode: 'BHA',
@@ -42,7 +42,7 @@ const DEVTEST_CONFIG = {
 
 export const DEVTEST_CITY = {
   cityName: 'DevTest',
-  city: 'devtest',
+  city: 'DevTest',
   key: 'MNZ',
   dbPath: `${DEVTEST_CONFIG.databaseURL}/`,
   empCode: 'DEV',

@@ -1,5 +1,6 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
+  ActivityIndicator,
   Animated,
   Image,
   Pressable,
@@ -62,12 +63,16 @@ export default function LoginScreen({navigation}) {
   const [error, setError]             = useState(null);
   const [deviceData, setDeviceData]   = useState(null);
   const [assignData, setAssignData]   = useState(null);
+  const [isProceeding, setIsProceeding] = useState(false);
 
   const allDone   = currentStep >= STEPS.length && !error;
   const activeIdx = Math.min(currentStep, STEPS.length - 1);
 
   const onProceed = useCallback(() => {
-    navigation.replace('Map', {deviceData, assignData});
+    setIsProceeding(true);
+    setTimeout(() => {
+      navigation.replace('Map', {deviceData, assignData});
+    }, 150);
   }, [navigation, deviceData, assignData]);
 
   const runFlow = useCallback(async () => {
@@ -235,14 +240,25 @@ export default function LoginScreen({navigation}) {
 
                 {/* Proceed button */}
                 <Pressable
-                  style={({pressed}) => [s.proceedBtn, pressed && s.proceedBtnPressed]}
-                  onPress={onProceed}>
-                  <Text style={s.proceedTxt}>आगे बढ़ें</Text>
-                  <MaterialCommunityIcons
-                    name="arrow-right"
-                    size={scale(20)}
-                    color="#fff"
-                  />
+                  style={({pressed}) => [
+                    s.proceedBtn,
+                    pressed && !isProceeding && s.proceedBtnPressed,
+                    isProceeding && {opacity: 0.8}
+                  ]}
+                  onPress={onProceed}
+                  disabled={isProceeding}>
+                  {isProceeding ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <>
+                      <Text style={s.proceedTxt}>आगे बढ़ें</Text>
+                      <MaterialCommunityIcons
+                        name="arrow-right"
+                        size={scale(20)}
+                        color="#fff"
+                      />
+                    </>
+                  )}
                 </Pressable>
               </>
             ) : null}
