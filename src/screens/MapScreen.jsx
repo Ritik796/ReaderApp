@@ -131,6 +131,7 @@ export default function MapScreen({route, navigation}) {
   ).current;
   const [, setMapRegion] = useState(DEFAULT_REGION);
   const [currentLine, setCurrentLine] = useState(MOCK.currentLine);
+  const [focusStamp, setFocusStamp] = useState(Date.now());
   const [, setLineScanCount] = useState(MOCK.lineScanCount);
   const [infoVisible, setInfoVisible] = useState(false);
   const [userLocation, setUserLocation] = useState(null);
@@ -554,6 +555,7 @@ export default function MapScreen({route, navigation}) {
   useFocusEffect(
     useCallback(() => {
       const task = InteractionManager.runAfterInteractions(() => {
+        setFocusStamp(Date.now());
         loadMapData();
       });
       return () => task.cancel();
@@ -679,6 +681,7 @@ export default function MapScreen({route, navigation}) {
             />
             {currentLinePoints?.length ? (
               <Marker
+                key={`start-marker-${currentLine}-${focusStamp}`}
                 coordinate={currentLinePoints[0]}
                 anchor={{x: 0.5, y: 0.5}}
                 zIndex={20}
@@ -688,7 +691,7 @@ export default function MapScreen({route, navigation}) {
             ) : null}
             {currentLinePoints?.length ? (
               <Marker
-                key={`line-end-arrow-${currentLine?.id || currentLine}-${endArrowRotation}`}
+                key={`line-end-arrow-${currentLine?.id || currentLine}-${endArrowRotation}-${focusStamp}`}
                 coordinate={currentLinePoints[currentLinePoints.length - 1]}
                 anchor={{x: 0.5, y: 0.5}}
                 zIndex={20}
@@ -700,6 +703,7 @@ export default function MapScreen({route, navigation}) {
             ) : null}
             {userLocation ? (
               <Marker.Animated
+                key={`user-marker-${focusStamp}`}
                 coordinate={userAnimatedCoordinate}
                 anchor={{x: 0.5, y: 0.5}}
                 zIndex={30}
@@ -715,7 +719,7 @@ export default function MapScreen({route, navigation}) {
             ) : null}
             {housesToRender.map((house, index) => (
               <Marker
-                key={`${house.lineId}_${house.cardNumber || house.uid || index}`}
+                key={`${house.lineId}_${house.cardNumber || house.uid || index}_${focusStamp}`}
                 coordinate={{
                   latitude: Number(house.latitude),
                   longitude: Number(house.longitude),
