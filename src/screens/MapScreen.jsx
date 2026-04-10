@@ -11,6 +11,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useFocusEffect} from '@react-navigation/native';
 import Geolocation from '@react-native-community/geolocation';
@@ -52,6 +53,8 @@ const CURRENT_POSITION_OPTIONS = {
   timeout: 30000,
   maximumAge: 0,
 };
+
+const LAST_USER_LOCATION_KEY = 'reader_last_user_location';
 
 const getLineEndBearing = (points = []) => {
   if (!Array.isArray(points) || points.length < 2) {
@@ -154,6 +157,42 @@ export default function MapScreen({route, navigation}) {
       helperId,
     };
   }, [route?.params]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const restoreLastUserLocation = async () => {
+      try {
+        const raw = await AsyncStorage.getItem(LAST_USER_LOCATION_KEY);
+        if (!isMounted || !raw) return;
+
+        const parsed = JSON.parse(raw);
+        const latitude = Number(parsed?.latitude);
+        const longitude = Number(parsed?.longitude);
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+          return;
+        }
+
+        const restored = {latitude, longitude};
+        userLocationRef.current = restored;
+        setUserLocation(restored);
+        userAnimatedCoordinate.setValue({
+          latitude,
+          longitude,
+        });
+        hasAnimatedToUserRef.current = true;
+        animateToLocation(restored);
+      } catch (_error) {
+        // best effort restore only
+      }
+    };
+
+    restoreLastUserLocation();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [animateToLocation, userAnimatedCoordinate]);
 
   const currentLineData = wardLines[activeLineIndex] || null;
   const allWardHouses = useMemo(
@@ -340,7 +379,9 @@ export default function MapScreen({route, navigation}) {
           });
         });
       }
-      if (first?.points?.[0]) {
+      if (userLocationRef.current) {
+        animateToLocation(userLocationRef.current);
+      } else if (first?.points?.[0]) {
         animateToLocation(first.points[0]);
       }
     } catch (error) {
@@ -365,6 +406,7 @@ export default function MapScreen({route, navigation}) {
     };
     userLocationRef.current = next;
     setUserLocation(next);
+    AsyncStorage.setItem(LAST_USER_LOCATION_KEY, JSON.stringify(next)).catch(() => {});
     if (!hasAnimatedToUserRef.current) {
       userAnimatedCoordinate.setValue({
         latitude: next.latitude,
