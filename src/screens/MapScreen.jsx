@@ -204,12 +204,12 @@ export default function MapScreen({route, navigation}) {
   const lineCacheSummary = String(currentLineData?.id || '')
     ? cacheCounts.byLine?.[String(currentLineData.id || '')] || null
     : null;
-  const lineScanCountValue = lineCacheSummary
-    ? Number(lineCacheSummary.scannedCount || 0)
-    : currentLineData?.houses?.filter(isHouseScanned).length || 0;
+  
+  // ALWAYS calculate from the merged houses array so map markers and stats box exactly match
+  const lineScanCountValue = currentLineData?.houses?.filter(isHouseScanned).length || 0;
   const lineHouseTotal = currentLineData?.houses?.length || 0;
   const wardHouseTotal = allWardHouses.length;
-  const wardScanCountValue = cacheCounts.scannedCount || allWardHouses.filter(isHouseScanned).length;
+  const wardScanCountValue = allWardHouses.filter(isHouseScanned).length;
   const currentLinePoints = currentLineData?.points?.length
     ? currentLineData.points
     : MOCK.currentLineCoords;
