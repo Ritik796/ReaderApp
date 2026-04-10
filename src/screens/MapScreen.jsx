@@ -225,10 +225,6 @@ export default function MapScreen({route, navigation}) {
     : 0;
 
   const onQrScan = () => {
-    if (!userLocation) {
-      showToast('warning', 'Current location अभी नहीं मिली है।');
-      return;
-    }
     setQrModalVisible(true);
   };
 

@@ -168,17 +168,16 @@ export default function MapQrScannerModal({
           return;
         }
 
-        if (line && match.matchedLine && String(line) !== String(match.matchedLine)) {
-          showToast('warning', `Card Not Found: line ${match.matchedLine} का card है.`);
-          return;
-        }
+        const houseLatLng = match.matchedHouse
+          ? `${match.matchedHouse.latitude},${match.matchedHouse.longitude}`
+          : '';
 
         handleValidated({
           cardNumber,
           wardNo,
           line,
           helperId,
-          latLng,
+          latLng: houseLatLng,
         });
       } catch (error) {
         showToast('error', error?.message || 'Unable to validate card');
