@@ -124,7 +124,7 @@ export const checkForUpdates = async (callbacks = {}, runtimeConfig = null, opti
           Boolean(latestBundleAssetId && latestBundleAssetId !== storedBundleAssetId);
 
         if (!shouldOfferJsUpdate) {
-          return true;
+          return false;
         }
 
         const downloadUrl = gitAccessToken ? otaPackageAsset.url : otaPackageAsset.browser_download_url;
