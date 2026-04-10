@@ -128,7 +128,6 @@ export default function MapScreen({route, navigation}) {
       longitudeDelta: 0,
     }),
   ).current;
-  const [, setMapRegion] = useState(DEFAULT_REGION);
   const [currentLine, setCurrentLine] = useState(MOCK.currentLine);
   const [, setLineScanCount] = useState(MOCK.lineScanCount);
   const [infoVisible, setInfoVisible] = useState(false);
@@ -431,11 +430,6 @@ export default function MapScreen({route, navigation}) {
         useNativeDriver: false,
       }).start();
     }
-    setMapRegion(prev => ({
-      ...prev,
-      latitude: next.latitude,
-      longitude: next.longitude,
-    }));
   }, [hideLoader, userAnimatedCoordinate]);
 
   useEffect(() => {
@@ -659,7 +653,6 @@ export default function MapScreen({route, navigation}) {
                 currentLinePoints?.[0]?.longitude ||
                 DEFAULT_REGION.longitude,
             }}
-            onRegionChangeComplete={setMapRegion}
             toolbarEnabled={false}
             showsMyLocationButton={false}
             showsUserLocation={false}
