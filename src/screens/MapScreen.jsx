@@ -225,6 +225,10 @@ export default function MapScreen({route, navigation}) {
     : 0;
 
   const onQrScan = () => {
+    if (!userLocation) {
+      showToast('warning', 'Current location अभी नहीं मिली है।');
+      return;
+    }
     setQrModalVisible(true);
   };
 
@@ -516,58 +520,62 @@ export default function MapScreen({route, navigation}) {
           return;
         }
 
-        setIsLocating(true);
-        safeShowLoader('Fetching location...');
+        if (!isInitialLocationSettledRef.current) {
+          setIsLocating(true);
+          safeShowLoader('Fetching location...');
 
-        Geolocation.getCurrentPosition(
-          position => {
-            updateLocation(position.coords);
-            animateToLocation(position.coords);
-          },
-          error => {
-            if (isInitialLocationSettledRef.current || userLocationRef.current) {
-              return;
-            }
-
-            let message = 'GPS signal नहीं मिला। कृपया खुले स्थान में जाकर दोबारा कोशिश करें।';
-            if (error?.code === 1) {
-              message = 'Location permission allow करें।';
-            } else if (error?.code === 3) {
-              message = 'GPS signal नहीं मिला (timeout)। कृपया खुले स्थान में रहें।';
-            } else if (error?.code === 2) {
-              message = 'GPS signal नहीं मिला। थोड़ी देर बाद फिर कोशिश करें।';
-            }
-
-            setIsLocating(false);
-            safeHideLoader();
-            if (!locationIssueShownRef.current) {
-              locationIssueShownRef.current = true;
-              showToast('warning', message);
-            }
-          },
-          CURRENT_POSITION_OPTIONS,
-        );
-
-        const watchId = Geolocation.watchPosition(
-          position => {
-            updateLocation(position.coords);
-          },
-          error => {
-            if (isInitialLocationSettledRef.current || userLocationRef.current) {
-              return;
-            }
-            if (!locationIssueShownRef.current) {
-              locationIssueShownRef.current = true;
-              if (error?.code === 1) {
-                showToast('warning', 'Location permission allow करें।');
-              } else {
-                showToast('warning', 'GPS signal नहीं मिला। Live location update रुक गई है।');
+          Geolocation.getCurrentPosition(
+            position => {
+              updateLocation(position.coords);
+              animateToLocation(position.coords);
+            },
+            error => {
+              if (isInitialLocationSettledRef.current || userLocationRef.current) {
+                return;
               }
-            }
-          },
-          WATCH_OPTIONS,
-        );
-        locationWatchIdRef.current = watchId;
+
+              let message = 'GPS signal नहीं मिला। कृपया खुले स्थान में जाकर दोबारा कोशिश करें।';
+              if (error?.code === 1) {
+                message = 'Location permission allow करें।';
+              } else if (error?.code === 3) {
+                message = 'GPS signal नहीं मिला (timeout)। कृपया खुले स्थान में रहें।';
+              } else if (error?.code === 2) {
+                message = 'GPS signal नहीं मिला। थोड़ी देर बाद फिर कोशिश करें।';
+              }
+
+              setIsLocating(false);
+              safeHideLoader();
+              if (!locationIssueShownRef.current) {
+                locationIssueShownRef.current = true;
+                showToast('warning', message);
+              }
+            },
+            CURRENT_POSITION_OPTIONS,
+          );
+        }
+
+        if (!qrModalVisible) {
+          const watchId = Geolocation.watchPosition(
+            position => {
+              updateLocation(position.coords);
+            },
+            error => {
+              if (isInitialLocationSettledRef.current || userLocationRef.current) {
+                return;
+              }
+              if (!locationIssueShownRef.current) {
+                locationIssueShownRef.current = true;
+                if (error?.code === 1) {
+                  showToast('warning', 'Location permission allow करें।');
+                } else {
+                  showToast('warning', 'GPS signal नहीं मिला। Live location update रुक गई है।');
+                }
+              }
+            },
+            WATCH_OPTIONS,
+          );
+          locationWatchIdRef.current = watchId;
+        }
       } catch {
         setIsLocating(false);
         safeHideLoader();
@@ -582,10 +590,8 @@ export default function MapScreen({route, navigation}) {
 
     return () => {
       stopTracking();
-      safeHideLoader();
-      locationIssueShownRef.current = false;
     };
-  }, [animateToLocation, safeHideLoader, safeShowLoader, showToast, updateLocation]);
+  }, [animateToLocation, safeHideLoader, safeShowLoader, showToast, updateLocation, qrModalVisible]);
 
   useFocusEffect(
     useCallback(() => {
