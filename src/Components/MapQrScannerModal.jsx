@@ -2,13 +2,14 @@ import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   ActivityIndicator,
   Animated,
-  Modal,
+  Dimensions,
   Pressable,
   StatusBar,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {
   Camera,
   useCameraDevice,
@@ -59,6 +60,7 @@ export default function MapQrScannerModal({
   onClose,
   onSuccess,
 }) {
+  const insets = useSafeAreaInsets();
   const {hasPermission, requestPermission} = useCameraPermission();
   const device = useCameraDevice('back');
   const scanLock = useRef(false);
@@ -199,7 +201,7 @@ export default function MapQrScannerModal({
   // ── No permission ──
   if (!hasPermission) {
     return (
-      <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={closeModal}>
+      <View style={s.modalRoot}>
         <View style={s.permContainer}>
           <StatusBar barStyle="light-content" backgroundColor="#080F18" />
           <View style={s.permIconCircle}>
@@ -233,13 +235,13 @@ export default function MapQrScannerModal({
             <Text style={s.permBackText}>Go Back</Text>
           </Pressable>
         </View>
-      </Modal>
+      </View>
     );
   }
 
   if (!device) {
     return (
-      <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={closeModal}>
+      <View style={s.modalRoot}>
         <View style={s.permContainer}>
           <StatusBar barStyle="light-content" backgroundColor="#080F18" />
           <View style={s.permIconCircle}>
@@ -255,7 +257,7 @@ export default function MapQrScannerModal({
             <Text style={s.permBackText}>Go Back</Text>
           </Pressable>
         </View>
-      </Modal>
+      </View>
     );
   }
 
@@ -265,7 +267,7 @@ export default function MapQrScannerModal({
   });
 
   return (
-    <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={closeModal}>
+    <View style={s.modalRoot}>
       <View style={s.root}>
         <StatusBar barStyle="light-content" backgroundColor="#000" translucent />
 
@@ -341,7 +343,7 @@ export default function MapQrScannerModal({
           />
         </Pressable>
       </View>
-    </Modal>
+    </View>
   );
 }
 
@@ -349,7 +351,19 @@ const VF = scale(260);
 const CORNER = scale(26);
 const CORNER_T = 3.5;
 
+const {width: WINDOW_WIDTH, height: WINDOW_HEIGHT} = Dimensions.get('window');
+
 const s = StyleSheet.create({
+  modalRoot: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: WINDOW_WIDTH,
+    height: WINDOW_HEIGHT,
+    zIndex: 9999,
+    elevation: 99,
+    backgroundColor: '#000',
+  },
   root: {flex: 1, backgroundColor: '#000'},
 
   // ── Overlay ──
