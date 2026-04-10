@@ -24,11 +24,11 @@ class MainApplication : Application(), ReactApplication {
   }
 
   private fun resolveJsBundleFilePath(): String? {
-    val otaBundle = File(filesDir, "ota/index.android.bundle")
-    if (otaBundle.exists()) return otaBundle.absolutePath
-
     val directBundle = File(filesDir, "index.android.bundle")
     if (directBundle.exists()) return directBundle.absolutePath
+
+    val otaBundle = File(filesDir, "ota/index.android.bundle")
+    if (otaBundle.exists()) return otaBundle.absolutePath
 
     return null
   }
