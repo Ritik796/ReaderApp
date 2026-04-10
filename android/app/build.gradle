@@ -84,15 +84,6 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    splits {
-        abi {
-            enable true
-            reset()
-            include 'armeabi-v7a', 'arm64-v8a'
-            universalApk false
-        }
-    }
-
     namespace "com.readerapplatest"
     defaultConfig {
         applicationId "com.readerapplatest"
@@ -101,6 +92,12 @@ android {
         versionCode 1
         versionName "1.0.0.1"
         manifestPlaceholders = [usesCleartextTraffic: "true"]
+
+        // Build a single release APK like Survey-Huf and keep only the
+        // physical-device ABIs we want to ship.
+        ndk {
+            abiFilters "armeabi-v7a", "arm64-v8a"
+        }
     }
     signingConfigs {
         debug {
