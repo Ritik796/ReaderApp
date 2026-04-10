@@ -2,6 +2,7 @@ import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   ActivityIndicator,
   Animated,
+  BackHandler,
   Dimensions,
   Pressable,
   StatusBar,
@@ -69,6 +70,7 @@ export default function MapQrScannerModal({
   const [permRequested, setPermRequested] = useState(false);
   const [torch, setTorch] = useState(false);
   const {showToast} = useToast();
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (!visible) {
@@ -194,80 +196,87 @@ export default function MapQrScannerModal({
     onCodeScanned,
   });
 
+  useEffect(() => {
+    if (visible) {
+      Animated.timing(fadeAnim, {toValue: 1, duration: 250, useNativeDriver: true}).start();
+      const handleBack = () => {
+        closeModal();
+        return true;
+      };
+      const subscription = BackHandler.addEventListener('hardwareBackPress', handleBack);
+      return () => subscription.remove();
+    } else {
+      fadeAnim.setValue(0);
+    }
+  }, [visible, fadeAnim, closeModal]);
+
   if (!visible) {
     return null;
   }
 
-  // ── No permission ──
+  let modalContent = null;
+
   if (!hasPermission) {
-    return (
-      <View style={s.modalRoot}>
-        <View style={s.permContainer}>
-          <StatusBar barStyle="light-content" backgroundColor="#080F18" />
-          <View style={s.permIconCircle}>
-            <MaterialCommunityIcons
-              name="camera-lock-outline"
-              size={scale(48)}
-              color="#fff"
-            />
-          </View>
-          <Text style={s.permTitle}>Camera Permission Required</Text>
-          <Text style={s.permSub}>
-            Allow camera access to scan QR codes for waste entry
-          </Text>
-          <Pressable
-            style={({pressed}) => [s.permBtn, pressed && {opacity: 0.85}]}
-            onPress={() => requestPermission()}>
-            {permRequested ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <>
-                <MaterialCommunityIcons
-                  name="camera-outline"
-                  size={scale(16)}
-                  color="#fff"
-                />
-                <Text style={s.permBtnText}>Grant Permission</Text>
-              </>
-            )}
-          </Pressable>
-          <Pressable style={s.permBack} onPress={closeModal}>
-            <Text style={s.permBackText}>Go Back</Text>
-          </Pressable>
+    modalContent = (
+      <View style={s.permContainer}>
+        <StatusBar barStyle="light-content" backgroundColor="#080F18" />
+        <View style={s.permIconCircle}>
+          <MaterialCommunityIcons
+            name="camera-lock-outline"
+            size={scale(48)}
+            color="#fff"
+          />
         </View>
+        <Text style={s.permTitle}>Camera Permission Required</Text>
+        <Text style={s.permSub}>
+          Allow camera access to scan QR codes for waste entry
+        </Text>
+        <Pressable
+          style={({pressed}) => [s.permBtn, pressed && {opacity: 0.85}]}
+          onPress={() => requestPermission()}>
+          {permRequested ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <>
+              <MaterialCommunityIcons
+                name="camera-outline"
+                size={scale(16)}
+                color="#fff"
+              />
+              <Text style={s.permBtnText}>Grant Permission</Text>
+            </>
+          )}
+        </Pressable>
+        <Pressable style={s.permBack} onPress={closeModal}>
+          <Text style={s.permBackText}>Go Back</Text>
+        </Pressable>
       </View>
     );
-  }
-
-  if (!device) {
-    return (
-      <View style={s.modalRoot}>
-        <View style={s.permContainer}>
-          <StatusBar barStyle="light-content" backgroundColor="#080F18" />
-          <View style={s.permIconCircle}>
-            <MaterialCommunityIcons
-              name="camera-off-outline"
-              size={scale(48)}
-              color="#fff"
-            />
-          </View>
-          <Text style={s.permTitle}>Camera Not Available</Text>
-          <Text style={s.permSub}>No camera was found on this device</Text>
-          <Pressable style={s.permBack} onPress={closeModal}>
-            <Text style={s.permBackText}>Go Back</Text>
-          </Pressable>
+  } else if (!device) {
+    modalContent = (
+      <View style={s.permContainer}>
+        <StatusBar barStyle="light-content" backgroundColor="#080F18" />
+        <View style={s.permIconCircle}>
+          <MaterialCommunityIcons
+            name="camera-off-outline"
+            size={scale(48)}
+            color="#fff"
+          />
         </View>
+        <Text style={s.permTitle}>Camera Not Available</Text>
+        <Text style={s.permSub}>No camera was found on this device</Text>
+        <Pressable style={s.permBack} onPress={closeModal}>
+          <Text style={s.permBackText}>Go Back</Text>
+        </Pressable>
       </View>
     );
-  }
+  } else {
+    const scanLineY = lineAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0, scale(VF - 4)],
+    });
 
-  const scanLineY = lineAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, scale(VF - 4)],
-  });
-
-  return (
-    <View style={s.modalRoot}>
+    modalContent = (
       <View style={s.root}>
         <StatusBar barStyle="light-content" backgroundColor="#000" translucent />
 
@@ -317,13 +326,18 @@ export default function MapQrScannerModal({
 
         {/* ── Back button (top-left) ── */}
         <Pressable
-          style={({pressed}) => [s.iconBtn, s.backBtn, pressed && s.iconBtnPressed]}
+          style={({pressed}) => [
+            s.iconBtn,
+            {top: insets.top + mvs(12)},
+            s.backBtn,
+            pressed && s.iconBtnPressed,
+          ]}
           onPress={closeModal}>
           <MaterialCommunityIcons name="arrow-left" size={scale(20)} color="#fff" />
         </Pressable>
 
         {/* ── Title ── */}
-        <View style={s.titleWrap}>
+        <View style={[s.titleWrap, {top: insets.top + mvs(14)}]}>
           <Text style={s.title}>Scan QR Code</Text>
         </View>
 
@@ -331,6 +345,7 @@ export default function MapQrScannerModal({
         <Pressable
           style={({pressed}) => [
             s.iconBtn,
+            {top: insets.top + mvs(12)},
             s.torchBtn,
             torch && s.torchActive,
             pressed && s.iconBtnPressed,
@@ -343,7 +358,13 @@ export default function MapQrScannerModal({
           />
         </Pressable>
       </View>
-    </View>
+    );
+  }
+
+  return (
+    <Animated.View style={[StyleSheet.absoluteFill, {zIndex: 999, elevation: 99, opacity: fadeAnim}]}>
+      {modalContent}
+    </Animated.View>
   );
 }
 
@@ -351,23 +372,24 @@ const VF = scale(260);
 const CORNER = scale(26);
 const CORNER_T = 3.5;
 
-const {width: WINDOW_WIDTH, height: WINDOW_HEIGHT} = Dimensions.get('window');
+const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('screen');
 
 const s = StyleSheet.create({
-  modalRoot: {
+  root: {
+    height: SCREEN_HEIGHT,
+    width: SCREEN_WIDTH,
+    backgroundColor: '#000',
+  },
+
+  // ── Overlay ──
+  overlay: {
     position: 'absolute',
     top: 0,
     left: 0,
-    width: WINDOW_WIDTH,
-    height: WINDOW_HEIGHT,
-    zIndex: 9999,
-    elevation: 99,
-    backgroundColor: '#000',
+    width: SCREEN_WIDTH,
+    height: SCREEN_HEIGHT,
+    backgroundColor: 'transparent',
   },
-  root: {flex: 1, backgroundColor: '#000'},
-
-  // ── Overlay ──
-  overlay: {flex: 1, position: 'absolute', inset: 0},
   overlayTop: {
     backgroundColor: 'rgba(0,0,0,0.68)',
     height: scale(160),
@@ -387,6 +409,7 @@ const s = StyleSheet.create({
     width: VF,
     height: VF,
     overflow: 'hidden',
+    backgroundColor: 'transparent',
   },
   corner: {
     position: 'absolute',
