@@ -313,11 +313,32 @@ export default function MapScreen({route, navigation}) {
   }, [animateToLocation, userAnimatedCoordinate]);
 
   const onCenterLocation = () => {
-    if (!userLocation) {
-      showToast('warning', 'Current location अभी नहीं मिली। GPS/Location ON करें।');
-      return;
-    }
-    animateToLocation(userLocation);
+    showLoader('Fetching location...', true);
+    Geolocation.getCurrentPosition(
+      position => {
+        hideLoader();
+        const coords = position.coords;
+        if (coords.accuracy && coords.accuracy > 25) {
+          showToast('warning', 'GPS accuracy कम है। पुनः प्रयास करें।');
+          return;
+        }
+        updateLocation(coords);
+        animateToLocation(coords);
+      },
+      error => {
+        hideLoader();
+        if (error.code === 1) {
+          showToast('error', 'Location permission denied. कृपया location अनुमति दें।');
+        } else if (error.code === 2) {
+          showToast('warning', 'GPS बंद है या उपलब्ध नहीं है। कृपया पुनः प्रयास करें।');
+        } else if (error.code === 3) {
+          showToast('warning', 'कृपया GPS / Location चालू करें।');
+        } else {
+          showToast('warning', 'GPS बंद है या उपलब्ध नहीं है। कृपया पुनः प्रयास करें।');
+        }
+      },
+      {enableHighAccuracy: true, timeout: 15000, maximumAge: 0},
+    );
   };
 
   const onNavigateToLine = () => {

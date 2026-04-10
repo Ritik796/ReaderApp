@@ -1,5 +1,5 @@
 // Production config (Bharatpur)
-const HISAR_CONFIG = {
+const BHARATPUR_CONFIG = {
   apiKey: 'AIzaSyBGZ_IB4y5Ov1nuqIhWndGU8hfJadlE85I',
   authDomain: 'dtdnavigator.firebaseapp.com',
   databaseURL: 'https://dtdbharatpur.firebaseio.com',
@@ -9,22 +9,22 @@ const HISAR_CONFIG = {
   appId: '1:381118272786:android:8580682aed749a06ec0fcb',
 };
 
-export const HISAR_CITY = {
+export const BHARATPUR_CITY = {
   cityName: 'Bharatpur',
   city: 'Bharatpur',
   key: 'BTPR',
-  dbPath: `${HISAR_CONFIG.databaseURL}/`,
+  dbPath: `${BHARATPUR_CONFIG.databaseURL}/`,
   empCode: 'BHA',
   storagePath: 'gs://dtdnavigator.appspot.com/Bharatpur',
   firebaseStoragePath:
     'https://firebasestorage.googleapis.com/v0/b/dtdnavigator.appspot.com/o/',
-  apiKey: HISAR_CONFIG.apiKey,
-  appId: HISAR_CONFIG.appId,
-  authDomain: HISAR_CONFIG.authDomain,
-  databaseURL: HISAR_CONFIG.databaseURL,
-  projectId: HISAR_CONFIG.projectId,
-  storageBucket: HISAR_CONFIG.storageBucket,
-  messagingSenderId: HISAR_CONFIG.messagingSenderId,
+  apiKey: BHARATPUR_CONFIG.apiKey,
+  appId: BHARATPUR_CONFIG.appId,
+  authDomain: BHARATPUR_CONFIG.authDomain,
+  databaseURL: BHARATPUR_CONFIG.databaseURL,
+  projectId: BHARATPUR_CONFIG.projectId,
+  storageBucket: BHARATPUR_CONFIG.storageBucket,
+  messagingSenderId: BHARATPUR_CONFIG.messagingSenderId,
   databaseName: 'dtdbharatpur',
   isUCCApplied: 'no',
 };
