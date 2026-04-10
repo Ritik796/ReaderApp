@@ -399,7 +399,18 @@ export default function MapScreen({route, navigation}) {
   ]);
 
   const updateLocation = useCallback(coords => {
+    // ALWAYS hide the loader on the first response to prevent screen frozen/deadlock
+    if (!isInitialLocationSettledRef.current) {
+      isInitialLocationSettledRef.current = true;
+      setIsLocating(false);
+      hideLoader();
+      locationIssueShownRef.current = false;
+    }
+
+    // Now securely filter out inaccurate locations without blocking the UI
+    if (coords?.accuracy && coords.accuracy > 50) return;
     if (coords?.latitude == null || coords?.longitude == null) return;
+    
     const next = {
       latitude: Number(coords.latitude),
       longitude: Number(coords.longitude),
@@ -426,12 +437,6 @@ export default function MapScreen({route, navigation}) {
       latitude: next.latitude,
       longitude: next.longitude,
     }));
-    if (!isInitialLocationSettledRef.current) {
-      isInitialLocationSettledRef.current = true;
-      setIsLocating(false);
-      hideLoader();
-      locationIssueShownRef.current = false;
-    }
   }, [hideLoader, userAnimatedCoordinate]);
 
   useEffect(() => {
