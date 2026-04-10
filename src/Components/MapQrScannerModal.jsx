@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Animated,
@@ -10,7 +10,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Camera,
   useCameraDevice,
@@ -18,12 +18,12 @@ import {
   useCodeScanner,
 } from 'react-native-vision-camera';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import {scale, mvs, ms} from '../utils/responsive';
+import { scale, mvs, ms } from '../utils/responsive';
 import appTheme from '../theme/appTheme';
-import {CITY} from '../Firebase/firebaseConfig';
-import {useToast} from '../context/ToastContext';
-import {findHouseInWardLines, getWardLinesDynamic} from '../services/mapLineService';
-import {isCardAlreadyScanned, loadDailyScanCache} from '../services/scanCacheService';
+import { CITY } from '../Firebase/firebaseConfig';
+import { useToast } from '../context/ToastContext';
+import { findHouseInWardLines, getWardLinesDynamic } from '../services/mapLineService';
+import { isCardAlreadyScanned, loadDailyScanCache } from '../services/scanCacheService';
 
 const SCAN_COOLDOWN = 2000;
 
@@ -62,14 +62,14 @@ export default function MapQrScannerModal({
   onSuccess,
 }) {
   const insets = useSafeAreaInsets();
-  const {hasPermission, requestPermission} = useCameraPermission();
+  const { hasPermission, requestPermission } = useCameraPermission();
   const device = useCameraDevice('back');
   const scanLock = useRef(false);
   const lineAnim = useRef(new Animated.Value(0)).current;
   const dotAnim = useRef(new Animated.Value(1)).current;
   const [permRequested, setPermRequested] = useState(false);
   const [torch, setTorch] = useState(false);
-  const {showToast} = useToast();
+  const { showToast } = useToast();
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -90,8 +90,8 @@ export default function MapQrScannerModal({
     if (visible && hasPermission && device) {
       Animated.loop(
         Animated.sequence([
-          Animated.timing(lineAnim, {toValue: 1, duration: 1800, useNativeDriver: true}),
-          Animated.timing(lineAnim, {toValue: 0, duration: 1800, useNativeDriver: true}),
+          Animated.timing(lineAnim, { toValue: 1, duration: 1800, useNativeDriver: true }),
+          Animated.timing(lineAnim, { toValue: 0, duration: 1800, useNativeDriver: true }),
         ]),
       ).start();
     } else {
@@ -104,8 +104,8 @@ export default function MapQrScannerModal({
     if (visible && hasPermission && device) {
       Animated.loop(
         Animated.sequence([
-          Animated.timing(dotAnim, {toValue: 0.25, duration: 650, useNativeDriver: true}),
-          Animated.timing(dotAnim, {toValue: 1, duration: 650, useNativeDriver: true}),
+          Animated.timing(dotAnim, { toValue: 0.25, duration: 650, useNativeDriver: true }),
+          Animated.timing(dotAnim, { toValue: 1, duration: 650, useNativeDriver: true }),
         ]),
       ).start();
     } else {
@@ -156,7 +156,7 @@ export default function MapQrScannerModal({
           return;
         }
 
-        const dailyCache = await loadDailyScanCache({wardNo});
+        const dailyCache = await loadDailyScanCache({ wardNo });
         if (
           isCardAlreadyScanned(
             dailyCache,
@@ -197,7 +197,7 @@ export default function MapQrScannerModal({
 
   useEffect(() => {
     if (visible) {
-      Animated.timing(fadeAnim, {toValue: 1, duration: 250, useNativeDriver: true}).start();
+      Animated.timing(fadeAnim, { toValue: 1, duration: 250, useNativeDriver: true }).start();
       const handleBack = () => {
         closeModal();
         return true;
@@ -231,7 +231,7 @@ export default function MapQrScannerModal({
           Allow camera access to scan QR codes for waste entry
         </Text>
         <Pressable
-          style={({pressed}) => [s.permBtn, pressed && {opacity: 0.85}]}
+          style={({ pressed }) => [s.permBtn, pressed && { opacity: 0.85 }]}
           onPress={() => requestPermission()}>
           {permRequested ? (
             <ActivityIndicator size="small" color="#fff" />
@@ -305,7 +305,7 @@ export default function MapQrScannerModal({
               <View style={[s.corner, s.cornerBR]} />
               {/* Scan line */}
               <Animated.View
-                style={[s.scanLine, {transform: [{translateY: scanLineY}]}]}
+                style={[s.scanLine, { transform: [{ translateY: scanLineY }] }]}
               />
             </View>
 
@@ -316,7 +316,7 @@ export default function MapQrScannerModal({
           <View style={s.overlayBottom}>
             {/* Scanning status pill */}
             <View style={s.scanPill}>
-              <Animated.View style={[s.scanDot, {opacity: dotAnim}]} />
+              <Animated.View style={[s.scanDot, { opacity: dotAnim }]} />
               <Text style={s.scanPillText}>Scanning for QR code…</Text>
             </View>
             <Text style={s.hint}>Position the QR code within the frame</Text>
@@ -325,9 +325,9 @@ export default function MapQrScannerModal({
 
         {/* ── Back button (top-left) ── */}
         <Pressable
-          style={({pressed}) => [
+          style={({ pressed }) => [
             s.iconBtn,
-            {top: insets.top + mvs(12)},
+            { top: insets.top + mvs(12) },
             s.backBtn,
             pressed && s.iconBtnPressed,
           ]}
@@ -336,15 +336,15 @@ export default function MapQrScannerModal({
         </Pressable>
 
         {/* ── Title ── */}
-        <View style={[s.titleWrap, {top: insets.top + mvs(14)}]}>
+        <View style={[s.titleWrap, { top: insets.top + mvs(14) }]}>
           <Text style={s.title}>Scan QR Code</Text>
         </View>
 
         {/* ── Torch button (top-right) ── */}
         <Pressable
-          style={({pressed}) => [
+          style={({ pressed }) => [
             s.iconBtn,
-            {top: insets.top + mvs(12)},
+            { top: insets.top + mvs(12) },
             s.torchBtn,
             torch && s.torchActive,
             pressed && s.iconBtnPressed,
@@ -361,7 +361,7 @@ export default function MapQrScannerModal({
   }
 
   return (
-    <Animated.View style={[StyleSheet.absoluteFill, {zIndex: 999, elevation: 99, opacity: fadeAnim}]}>
+    <Animated.View style={[StyleSheet.absoluteFill, { zIndex: 999, elevation: 99, opacity: fadeAnim }]}>
       {modalContent}
     </Animated.View>
   );
@@ -393,8 +393,8 @@ const s = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.68)',
     height: scale(160),
   },
-  middleRow: {flexDirection: 'row'},
-  overlaySide: {flex: 1, backgroundColor: 'rgba(0,0,0,0.68)'},
+  middleRow: { flexDirection: 'row' },
+  overlaySide: { flex: 1, backgroundColor: 'rgba(0,0,0,0.68)' },
   overlayBottom: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.68)',
@@ -452,7 +452,7 @@ const s = StyleSheet.create({
     borderRadius: 2,
     backgroundColor: appTheme.colors.accentPrimary,
     shadowColor: appTheme.colors.accentPrimary,
-    shadowOffset: {width: 0, height: 0},
+    shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 1,
     shadowRadius: 10,
     elevation: 10,
@@ -504,9 +504,9 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.14)',
   },
-  iconBtnPressed: {backgroundColor: 'rgba(0,0,0,0.72)'},
-  backBtn: {left: scale(16)},
-  torchBtn: {right: scale(16)},
+  iconBtnPressed: { backgroundColor: 'rgba(0,0,0,0.72)' },
+  backBtn: { left: scale(16) },
+  torchBtn: { right: scale(16) },
   torchActive: {
     backgroundColor: 'rgba(255,214,0,0.14)',
     borderColor: 'rgba(255,214,0,0.4)',
@@ -569,8 +569,8 @@ const s = StyleSheet.create({
     backgroundColor: appTheme.colors.accentPrimary,
     borderRadius: scale(14),
   },
-  permBtnText: {color: '#fff', fontWeight: '800', fontSize: ms(13)},
-  permBack: {marginTop: mvs(2)},
+  permBtnText: { color: '#fff', fontWeight: '800', fontSize: ms(13) },
+  permBack: { marginTop: mvs(2) },
   permBackText: {
     color: 'rgba(255,255,255,0.4)',
     fontSize: ms(12),

@@ -1,4 +1,4 @@
-                                                                                                                                                                                                                                        import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Image,
   Linking,
@@ -12,18 +12,18 @@ import {
   View,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import {useFocusEffect} from '@react-navigation/native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import Geolocation from '@react-native-community/geolocation';
-import MapView, {AnimatedRegion, Marker, Polyline, PROVIDER_GOOGLE} from 'react-native-maps';
+import MapView, { AnimatedRegion, Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import appTheme from '../theme/appTheme';
-import {ms, mvs, scale} from '../utils/responsive';
-import {useLoader} from '../context/LoaderContext';
-import {useToast} from '../context/ToastContext';
+import { ms, mvs, scale } from '../utils/responsive';
+import { useLoader } from '../context/LoaderContext';
+import { useToast } from '../context/ToastContext';
 import MapQrScannerModal from '../Components/MapQrScannerModal';
-import {getWardLinesDynamic} from '../services/mapLineService';
+import { getWardLinesDynamic } from '../services/mapLineService';
 import {
   getCacheCounts,
   loadActiveLineState,
@@ -90,14 +90,14 @@ const MOCK = {
   wardScanCount: 104,
   wardTotal: 485,
   currentLineCoords: [
-    {latitude: 27.2148, longitude: 77.488},
-    {latitude: 27.2155, longitude: 77.4895},
-    {latitude: 27.2162, longitude: 77.4905},
+    { latitude: 27.2148, longitude: 77.488 },
+    { latitude: 27.2155, longitude: 77.4895 },
+    { latitude: 27.2162, longitude: 77.4905 },
   ],
   currentLocation: null,
 };
 
-function InfoRow({icon, label, value}) {
+function InfoRow({ icon, label, value }) {
   return (
     <View style={s.infoRow}>
       <View style={s.infoIconWrap}>
@@ -115,7 +115,7 @@ function InfoRow({icon, label, value}) {
   );
 }
 
-export default function MapScreen({route, navigation}) {
+export default function MapScreen({ route, navigation }) {
   const mapRef = useRef(null);
   const locationWatchIdRef = useRef(null);
   const userLocationRef = useRef(null);
@@ -144,8 +144,8 @@ export default function MapScreen({route, navigation}) {
     scannedCount: 0,
     byLine: {},
   });
-  const {showLoader, hideLoader} = useLoader();
-  const {showToast} = useToast();
+  const { showLoader, hideLoader } = useLoader();
+  const { showToast } = useToast();
   const safeShowLoader = useCallback(
     (text, smallArea = false) => {
       if (!ENABLE_MAP_LOADERS) return;
@@ -183,9 +183,9 @@ export default function MapScreen({route, navigation}) {
     () =>
       Array.isArray(currentLineData?.houses)
         ? currentLineData.houses.map(house => ({
-            ...house,
-            lineId: String(currentLineData.id || ''),
-          }))
+          ...house,
+          lineId: String(currentLineData.id || ''),
+        }))
         : [],
     [currentLineData],
   );
@@ -196,15 +196,15 @@ export default function MapScreen({route, navigation}) {
     const flag = String(house?.isScanned || '').trim().toLowerCase();
     return Boolean(
       (scanBy && scanBy !== '-1' && scanBy !== '0') ||
-        scanTime ||
-        lastScanTime ||
-        ['yes', 'true', '1'].includes(flag),
+      scanTime ||
+      lastScanTime ||
+      ['yes', 'true', '1'].includes(flag),
     );
   };
   const lineCacheSummary = String(currentLineData?.id || '')
     ? cacheCounts.byLine?.[String(currentLineData.id || '')] || null
     : null;
-  
+
   // ALWAYS calculate from the merged houses array so map markers and stats box exactly match
   const lineScanCountValue = currentLineData?.houses?.filter(isHouseScanned).length || 0;
   const lineHouseTotal = currentLineData?.houses?.length || 0;
@@ -257,7 +257,7 @@ export default function MapScreen({route, navigation}) {
       lineId: String(nextLine?.id || ''),
       lineIndex: nextIndex,
     }).catch(error => {
-      console.log('[MapScreen] save active line failed', {message: error?.message});
+      console.log('[MapScreen] save active line failed', { message: error?.message });
     });
     if (nextLine?.points?.[0]) {
       animateToLocation(nextLine.points[0]);
@@ -291,7 +291,7 @@ export default function MapScreen({route, navigation}) {
           return;
         }
 
-        const restored = {latitude, longitude};
+        const restored = { latitude, longitude };
         userLocationRef.current = restored;
         setUserLocation(restored);
         userAnimatedCoordinate.setValue({
@@ -337,13 +337,13 @@ export default function MapScreen({route, navigation}) {
           showToast('warning', 'GPS बंद है या उपलब्ध नहीं है। कृपया पुनः प्रयास करें।');
         }
       },
-      {enableHighAccuracy: true, timeout: 15000, maximumAge: 0},
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
     );
   };
 
   const onNavigateToLine = () => {
     const start = currentLinePoints?.[0] || MOCK.currentLineCoords[0];
-    const {latitude, longitude} = start;
+    const { latitude, longitude } = start;
     const label = encodeURIComponent(`Line ${currentLine} Start`);
     const url =
       Platform.OS === 'ios'
@@ -359,15 +359,15 @@ export default function MapScreen({route, navigation}) {
     const ward = String(payload.ward || '').trim();
     if (!ward) return;
 
-    console.log('[MapScreen] loadWardLines start', {ward});
+    console.log('[MapScreen] loadWardLines start', { ward });
     safeShowLoader('Loading map lines...');
     try {
       await purgeStaleDailyCaches();
       const [resp, cache] = await Promise.all([
         getWardLinesDynamic(ward),
-        loadDailyScanCache({wardNo: ward}),
+        loadDailyScanCache({ wardNo: ward }),
       ]);
-      const activeLineState = await loadActiveLineState({wardNo: ward});
+      const activeLineState = await loadActiveLineState({ wardNo: ward });
 
       console.log('[MapScreen] scan cache summary', {
         ward,
@@ -426,7 +426,7 @@ export default function MapScreen({route, navigation}) {
         animateToLocation(first.points[0]);
       }
     } catch (error) {
-      console.log('[MapScreen] loadWardLines error', {ward, message: error?.message});
+      console.log('[MapScreen] loadWardLines error', { ward, message: error?.message });
       showToast('error', 'Line data load नहीं हो सका।');
     } finally {
       safeHideLoader();
@@ -451,14 +451,14 @@ export default function MapScreen({route, navigation}) {
     // Now securely filter out inaccurate locations without blocking the UI
     if (coords?.accuracy && coords.accuracy > 50) return;
     if (coords?.latitude == null || coords?.longitude == null) return;
-    
+
     const next = {
       latitude: Number(coords.latitude),
       longitude: Number(coords.longitude),
     };
     userLocationRef.current = next;
     setUserLocation(next);
-    AsyncStorage.setItem(LAST_USER_LOCATION_KEY, JSON.stringify(next)).catch(() => {});
+    AsyncStorage.setItem(LAST_USER_LOCATION_KEY, JSON.stringify(next)).catch(() => { });
     if (!hasAnimatedToUserRef.current) {
       userAnimatedCoordinate.setValue({
         latitude: next.latitude,
@@ -530,10 +530,8 @@ export default function MapScreen({route, navigation}) {
                 return;
               }
 
-              let message = 'GPS signal नहीं मिला। कृपया खुले स्थान में जाकर दोबारा कोशिश करें।';
-              if (error?.code === 1) {
-                message = 'Location permission allow करें।';
-              } else if (error?.code === 3) {
+              let message = 'Location permission allow करें।';
+              if (error?.code === 3) {
                 message = 'GPS signal नहीं मिला (timeout)। कृपया खुले स्थान में रहें।';
               } else if (error?.code === 2) {
                 message = 'GPS signal नहीं मिला। थोड़ी देर बाद फिर कोशिश करें।';
@@ -632,7 +630,7 @@ export default function MapScreen({route, navigation}) {
               color={appTheme.colors.accentPrimary}
             />
             <Text style={s.statLabel}>Line {currentLine}</Text>
-            <Text style={[s.statPct, {color: appTheme.colors.accentPrimary}]}>
+            <Text style={[s.statPct, { color: appTheme.colors.accentPrimary }]}>
               {linePct}%
             </Text>
           </View>
@@ -661,13 +659,13 @@ export default function MapScreen({route, navigation}) {
               color="#7B61FF"
             />
             <Text style={s.statLabel}>Ward</Text>
-            <Text style={[s.statPct, {color: '#7B61FF'}]}>{wardPct}%</Text>
+            <Text style={[s.statPct, { color: '#7B61FF' }]}>{wardPct}%</Text>
           </View>
-          <View style={[s.progressBg, {backgroundColor: '#EDE7FF'}]}>
+          <View style={[s.progressBg, { backgroundColor: '#EDE7FF' }]}>
             <View
               style={[
                 s.progressFill,
-                {width: `${wardPct}%`, backgroundColor: '#7B61FF'},
+                { width: `${wardPct}%`, backgroundColor: '#7B61FF' },
               ]}
             />
           </View>
@@ -717,7 +715,7 @@ export default function MapScreen({route, navigation}) {
               <Marker
                 key={`start-marker-${currentLine}_${focusStamp}`}
                 coordinate={currentLinePoints[0]}
-                anchor={{x: 0.5, y: 0.5}}
+                anchor={{ x: 0.5, y: 0.5 }}
                 zIndex={20}
                 tracksViewChanges={false}>
                 <View style={s.startDot} />
@@ -727,7 +725,7 @@ export default function MapScreen({route, navigation}) {
               <Marker
                 key={`line-end-arrow-${currentLine?.id || currentLine}-${endArrowRotation}_${focusStamp}`}
                 coordinate={currentLinePoints[currentLinePoints.length - 1]}
-                anchor={{x: 0.5, y: 0.5}}
+                anchor={{ x: 0.5, y: 0.5 }}
                 zIndex={20}
                 flat
                 rotation={endArrowRotation}
@@ -739,7 +737,7 @@ export default function MapScreen({route, navigation}) {
               <Marker.Animated
                 key={`user-marker_${focusStamp}`}
                 coordinate={userAnimatedCoordinate}
-                anchor={{x: 0.5, y: 0.5}}
+                anchor={{ x: 0.5, y: 0.5 }}
                 zIndex={30}
                 tracksViewChanges={true}
               >
@@ -760,7 +758,7 @@ export default function MapScreen({route, navigation}) {
                 }}
                 // Keep tracking on so the custom bitmap renders correctly on first load.
                 tracksViewChanges={true}
-                anchor={{x: 0.5, y: 0.5}}
+                anchor={{ x: 0.5, y: 0.5 }}
                 title={house.cardNumber || 'House'}
                 description={`Line ${house.lineId || house.line || '-'}`}
               >
@@ -783,9 +781,9 @@ export default function MapScreen({route, navigation}) {
         <View style={s.fabStack}>
           {/* Route */}
           <Pressable
-            style={({pressed}) => [s.fab, s.routeFab, pressed && s.fabPressed]}
+            style={({ pressed }) => [s.fab, s.routeFab, pressed && s.fabPressed]}
             onPress={onNavigateToLine}
-            android_ripple={{color: appTheme.colors.accentSoft, borderless: false}}>
+            android_ripple={{ color: appTheme.colors.accentSoft, borderless: false }}>
             <FontAwesome5
               name="route"
               size={scale(17)}
@@ -795,9 +793,9 @@ export default function MapScreen({route, navigation}) {
 
           {/* Current location */}
           <Pressable
-            style={({pressed}) => [s.fab, pressed && s.fabPressed]}
+            style={({ pressed }) => [s.fab, pressed && s.fabPressed]}
             onPress={onCenterLocation}
-            android_ripple={{color: appTheme.colors.accentSoft, borderless: false}}>
+            android_ripple={{ color: appTheme.colors.accentSoft, borderless: false }}>
             <MaterialCommunityIcons
               name="crosshairs-gps"
               size={scale(18)}
@@ -849,7 +847,7 @@ export default function MapScreen({route, navigation}) {
         <Pressable
           style={s.modalOverlay}
           onPress={() => setInfoVisible(false)}>
-          <Pressable style={s.infoCard} onPress={() => {}}>
+          <Pressable style={s.infoCard} onPress={() => { }}>
             {/* Header */}
             <View style={s.infoCardHeader}>
               <View style={s.infoCardTitleRow}>
@@ -875,7 +873,7 @@ export default function MapScreen({route, navigation}) {
             <View style={s.profileSection}>
               {payload.profileImage ? (
                 <Image
-                  source={{uri: payload.profileImage}}
+                  source={{ uri: payload.profileImage }}
                   style={s.profileImg}
                 />
               ) : (
@@ -919,7 +917,7 @@ export default function MapScreen({route, navigation}) {
 }
 
 const s = StyleSheet.create({
-  root: {flex: 1, backgroundColor: appTheme.colors.safeAreaBackground},
+  root: { flex: 1, backgroundColor: appTheme.colors.safeAreaBackground },
 
   // ── Top panel ──
   topPanel: {
@@ -935,7 +933,7 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: appTheme.colors.surfaceBorder,
   },
-  topLeft: {flex: 1},
+  topLeft: { flex: 1 },
   title: {
     fontSize: ms(15),
     fontWeight: '800',
@@ -975,22 +973,22 @@ const s = StyleSheet.create({
     borderColor: appTheme.colors.surfaceBorder,
     gap: mvs(5),
   },
-  statHeader: {flexDirection: 'row', alignItems: 'center', gap: scale(5)},
+  statHeader: { flexDirection: 'row', alignItems: 'center', gap: scale(5) },
   statLabel: {
     flex: 1,
     fontSize: ms(11),
     fontWeight: '600',
     color: appTheme.colors.textSecondary,
   },
-  statPct: {fontSize: ms(12), fontWeight: '800'},
+  statPct: { fontSize: ms(12), fontWeight: '800' },
   progressBg: {
     height: mvs(4),
     backgroundColor: appTheme.colors.backgroundSecondary,
     borderRadius: scale(4),
     overflow: 'hidden',
   },
-  progressFill: {height: '100%', borderRadius: scale(4)},
-  statCount: {fontSize: ms(10), color: appTheme.colors.textMuted},
+  progressFill: { height: '100%', borderRadius: scale(4) },
+  statCount: { fontSize: ms(10), color: appTheme.colors.textMuted },
 
   // ── Map container (flex wrapper so FABs aren't clipped) ──
   mapContainer: {
@@ -1005,7 +1003,7 @@ const s = StyleSheet.create({
     borderRadius: scale(12),
     overflow: 'hidden', // rounds map corners — FABs must live outside this
   },
-  map: {flex: 1},
+  map: { flex: 1 },
 
   // ── FABs — absolutely positioned inside mapContainer, NOT inside mapWrap ──
   fabStack: {
@@ -1026,7 +1024,7 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     elevation: 5,
     shadowColor: appTheme.colors.shadowColor,
-    shadowOffset: {width: 0, height: mvs(2)},
+    shadowOffset: { width: 0, height: mvs(2) },
     shadowOpacity: 0.22,
     shadowRadius: scale(6),
   },
@@ -1051,7 +1049,7 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: appTheme.colors.surfaceBorder,
   },
-  actionRow: {flexDirection: 'row', gap: scale(8)},
+  actionRow: { flexDirection: 'row', gap: scale(8) },
   secondaryBtn: {
     flex: 1,
     height: mvs(46),
@@ -1079,7 +1077,7 @@ const s = StyleSheet.create({
     gap: scale(6),
     elevation: 3,
     shadowColor: appTheme.colors.accentPrimary,
-    shadowOffset: {width: 0, height: mvs(2)},
+    shadowOffset: { width: 0, height: mvs(2) },
     shadowOpacity: 0.3,
     shadowRadius: scale(6),
   },
@@ -1105,7 +1103,7 @@ const s = StyleSheet.create({
     paddingVertical: mvs(16),
     elevation: 10,
     shadowColor: appTheme.colors.shadowColor,
-    shadowOffset: {width: 0, height: mvs(4)},
+    shadowOffset: { width: 0, height: mvs(4) },
     shadowOpacity: 0.2,
     shadowRadius: scale(12),
   },
@@ -1194,7 +1192,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  infoTextWrap: {flex: 1},
+  infoTextWrap: { flex: 1 },
   infoLabel: {
     fontSize: ms(10),
     color: appTheme.colors.textMuted,
