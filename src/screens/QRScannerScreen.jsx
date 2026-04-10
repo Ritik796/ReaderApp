@@ -223,7 +223,7 @@ export default function QRScannerScreen({navigation, route}) {
             wardNo,
             matchedLine: match.matchedLine,
           });
-          showToast('warning', 'Card already scanned');
+          showToast('warning', 'यह कार्ड पहले ही स्कैन हो चुका है।');
           return;
         }
 

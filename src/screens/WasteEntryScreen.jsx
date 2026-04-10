@@ -322,7 +322,7 @@ export default function WasteEntryScreen({route, navigation}) {
       });
       if (!result?.ok) {
         if (result?.code === 'ALREADY_SCANNED') {
-          showToast('warning', 'Card already scanned');
+          showToast('warning', 'यह कार्ड पहले ही स्कैन हो चुका है।');
         } else {
           showToast('error', result?.message || 'Unable to save entry');
         }
