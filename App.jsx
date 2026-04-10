@@ -1,6 +1,5 @@
 import React from 'react';
 import {StatusBar} from 'react-native';
-import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
@@ -18,30 +17,28 @@ const Stack = createNativeStackNavigator();
 
 export default function App() {
   return (
-    <GestureHandlerRootView style={{flex: 1}}>
-      <SafeAreaProvider>
-        <AppSafeAreaProvider>
-          <LoaderProvider>
-            <ToastProvider>
-              <StatusBar
-                barStyle="dark-content"
-                backgroundColor={appTheme.colors.safeAreaBackground}
-              />
-              <NavigationContainer>
-                <Stack.Navigator
-                  initialRouteName="Launcher"
-                  screenOptions={{headerShown: false, animation: 'fade'}}>
-                  <Stack.Screen name="Launcher"   component={LauncherScreen} />
-                  <Stack.Screen name="Login"      component={LoginScreen} />
-                  <Stack.Screen name="Map"        component={MapScreen} />
-                  <Stack.Screen name="QRScanner"  component={QRScannerScreen} />
-                  <Stack.Screen name="WasteEntry" component={WasteEntryScreen} />
-                </Stack.Navigator>
-              </NavigationContainer>
-            </ToastProvider>
-          </LoaderProvider>
-        </AppSafeAreaProvider>
-      </SafeAreaProvider>
-    </GestureHandlerRootView>
+    <SafeAreaProvider>
+      <AppSafeAreaProvider>
+        <LoaderProvider>
+          <ToastProvider>
+            <StatusBar
+              barStyle="dark-content"
+              backgroundColor={appTheme.colors.safeAreaBackground}
+            />
+            <NavigationContainer>
+              <Stack.Navigator
+                initialRouteName="Launcher"
+                screenOptions={{headerShown: false, animation: 'none'}}>
+                <Stack.Screen name="Launcher"   component={LauncherScreen} />
+                <Stack.Screen name="Login"      component={LoginScreen} />
+                <Stack.Screen name="Map"        component={MapScreen} />
+                <Stack.Screen name="QRScanner"  component={QRScannerScreen} />
+                <Stack.Screen name="WasteEntry" component={WasteEntryScreen} />
+              </Stack.Navigator>
+            </NavigationContainer>
+          </ToastProvider>
+        </LoaderProvider>
+      </AppSafeAreaProvider>
+    </SafeAreaProvider>
   );
 }
