@@ -22,6 +22,7 @@ import appTheme from '../theme/appTheme';
 import {ms, mvs, scale} from '../utils/responsive';
 import {useLoader} from '../context/LoaderContext';
 import {useToast} from '../context/ToastContext';
+import MapQrScannerModal from '../Components/MapQrScannerModal';
 import {getWardLinesDynamic} from '../services/mapLineService';
 import {
   getCacheCounts,
@@ -132,6 +133,7 @@ export default function MapScreen({route, navigation}) {
   const [currentLine, setCurrentLine] = useState(MOCK.currentLine);
   const [, setLineScanCount] = useState(MOCK.lineScanCount);
   const [infoVisible, setInfoVisible] = useState(false);
+  const [qrModalVisible, setQrModalVisible] = useState(false);
   const [userLocation, setUserLocation] = useState(null);
   const [isLocating, setIsLocating] = useState(false);
   const [wardLines, setWardLines] = useState([]);
@@ -222,15 +224,22 @@ export default function MapScreen({route, navigation}) {
     : 0;
 
   const onQrScan = () => {
-    navigation.navigate('QRScanner', {
-      wardNo: payload.ward || '',
-      line: String(currentLine || ''),
-      helperId: payload.helperId || '',
-      latLng: userLocation
-        ? `${userLocation.latitude},${userLocation.longitude}`
-        : '',
-    });
+    setQrModalVisible(true);
   };
+
+  const handleQrSuccess = useCallback(
+    scanPayload => {
+      setQrModalVisible(false);
+      navigation.navigate('WasteEntry', {
+        cardNumber: scanPayload?.cardNumber || '',
+        wardNo: scanPayload?.wardNo || '',
+        line: scanPayload?.line || '',
+        helperId: scanPayload?.helperId || '',
+        latLng: scanPayload?.latLng || '',
+      });
+    },
+    [navigation],
+  );
 
   const onChangeLine = () => {
     if (!wardLines.length) {
@@ -794,6 +803,16 @@ export default function MapScreen({route, navigation}) {
           </Pressable>
         </View>
       </View>
+
+      <MapQrScannerModal
+        visible={qrModalVisible}
+        wardNo={payload.ward || ''}
+        line={String(currentLine || '')}
+        helperId={payload.helperId || ''}
+        latLng={userLocation ? `${userLocation.latitude},${userLocation.longitude}` : ''}
+        onClose={() => setQrModalVisible(false)}
+        onSuccess={handleQrSuccess}
+      />
 
       {/* ── Info Modal ── */}
       <Modal
