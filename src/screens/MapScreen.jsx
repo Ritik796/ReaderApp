@@ -663,8 +663,14 @@ export default function MapScreen({route, navigation}) {
                 anchor={{x: 0.5, y: 0.5}}
                 zIndex={30}
                 tracksViewChanges={true}
-                image={require('../Assets/Images/person.png')}
-              />
+              >
+                <Image
+                  source={require('../Assets/Images/person.png')}
+                  style={s.userMarkerImage}
+                  resizeMode="contain"
+                  fadeDuration={0}
+                />
+              </Marker.Animated>
             ) : null}
             {housesToRender.map((house, index) => (
               <Marker
@@ -1140,6 +1146,10 @@ const s = StyleSheet.create({
   houseMarkerImage: {
     width: scale(18),
     height: scale(18),
+  },
+  userMarkerImage: {
+    width: scale(50),
+    height: scale(50),
   },
   lineEndArrowShape: {
     width: 0,
