@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+                                                                                                                                                                                                                                        import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
   Image,
   Linking,
@@ -55,6 +55,7 @@ const CURRENT_POSITION_OPTIONS = {
 };
 
 const LAST_USER_LOCATION_KEY = 'reader_last_user_location';
+const ENABLE_MAP_LOADERS = false;
 
 const getLineEndBearing = (points = []) => {
   if (!Array.isArray(points) || points.length < 2) {
@@ -142,6 +143,17 @@ export default function MapScreen({route, navigation}) {
   });
   const {showLoader, hideLoader} = useLoader();
   const {showToast} = useToast();
+  const safeShowLoader = useCallback(
+    (text, smallArea = false) => {
+      if (!ENABLE_MAP_LOADERS) return;
+      showLoader(text, smallArea);
+    },
+    [showLoader],
+  );
+  const safeHideLoader = useCallback(() => {
+    if (!ENABLE_MAP_LOADERS) return;
+    hideLoader();
+  }, [hideLoader]);
 
   const payload = useMemo(() => {
     const params = route?.params ?? {};
@@ -317,7 +329,7 @@ export default function MapScreen({route, navigation}) {
     if (!ward) return;
 
     console.log('[MapScreen] loadWardLines start', {ward});
-    showLoader('Loading map lines...');
+    safeShowLoader('Loading map lines...');
     try {
       await purgeStaleDailyCaches();
       const [resp, cache] = await Promise.all([
@@ -386,13 +398,13 @@ export default function MapScreen({route, navigation}) {
       console.log('[MapScreen] loadWardLines error', {ward, message: error?.message});
       showToast('error', 'Line data load नहीं हो सका।');
     } finally {
-      hideLoader();
+      safeHideLoader();
     }
   }, [
     animateToLocation,
-    hideLoader,
+    safeHideLoader,
     payload.ward,
-    showLoader,
+    safeShowLoader,
     showToast,
   ]);
 
@@ -401,7 +413,7 @@ export default function MapScreen({route, navigation}) {
     if (!isInitialLocationSettledRef.current) {
       isInitialLocationSettledRef.current = true;
       setIsLocating(false);
-      hideLoader();
+      safeHideLoader();
       locationIssueShownRef.current = false;
     }
 
@@ -430,7 +442,7 @@ export default function MapScreen({route, navigation}) {
         useNativeDriver: false,
       }).start();
     }
-  }, [hideLoader, userAnimatedCoordinate]);
+  }, [safeHideLoader, userAnimatedCoordinate]);
 
   useEffect(() => {
     Geolocation.setRNConfiguration({
@@ -465,7 +477,7 @@ export default function MapScreen({route, navigation}) {
         const hasPermission = await requestLocationPermission();
         if (!hasPermission) {
           setIsLocating(false);
-          hideLoader();
+          safeHideLoader();
           if (!locationIssueShownRef.current) {
             locationIssueShownRef.current = true;
             showToast('warning', 'Location permission allow करें।');
@@ -474,7 +486,7 @@ export default function MapScreen({route, navigation}) {
         }
 
         setIsLocating(true);
-        showLoader('Fetching location...');
+        safeShowLoader('Fetching location...');
 
         Geolocation.getCurrentPosition(
           position => {
@@ -496,7 +508,7 @@ export default function MapScreen({route, navigation}) {
             }
 
             setIsLocating(false);
-            hideLoader();
+            safeHideLoader();
             if (!locationIssueShownRef.current) {
               locationIssueShownRef.current = true;
               showToast('warning', message);
@@ -527,7 +539,7 @@ export default function MapScreen({route, navigation}) {
         locationWatchIdRef.current = watchId;
       } catch {
         setIsLocating(false);
-        hideLoader();
+        safeHideLoader();
         if (!locationIssueShownRef.current) {
           locationIssueShownRef.current = true;
           showToast('warning', 'GPS signal नहीं मिला। कृपया location on करके retry करें।');
@@ -539,10 +551,10 @@ export default function MapScreen({route, navigation}) {
 
     return () => {
       stopTracking();
-      hideLoader();
+      safeHideLoader();
       locationIssueShownRef.current = false;
     };
-  }, [animateToLocation, hideLoader, showLoader, showToast, updateLocation]);
+  }, [animateToLocation, safeHideLoader, safeShowLoader, showToast, updateLocation]);
 
   useFocusEffect(
     useCallback(() => {
