@@ -75,7 +75,7 @@ export default function LoginScreen({navigation}) {
     setDeviceData(null);
     setAssignData(null);
     setCurrentStep(0);
-    setStatusText('Device ID पहचान हो रही है…');
+    setStatusText('Device ID पहचान हो रही है');
 
     try {
       const device = await getOrCreateDeviceIdentity();
