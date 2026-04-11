@@ -34,6 +34,16 @@ function extractCardNumber(raw) {
   if (!value) return null;
 
   const cityKey = String(CITY?.key || '').trim();
+  const urlMatch = value.match(/https?:\/\/[^\s]+/i);
+  if (urlMatch?.[0]) {
+    const url = urlMatch[0].replace(/[),.;]+$/, '');
+    const urlParts = url.split('/').filter(Boolean);
+    const urlCard = urlParts[urlParts.length - 1] || '';
+    if (/^[A-Za-z0-9]+$/.test(urlCard)) {
+      return urlCard.toUpperCase();
+    }
+  }
+
   if (cityKey) {
     const cityMatch = value.match(
       new RegExp(`(?:^|[\\/])${escapeRegex(cityKey)}[\\/](?<card>[A-Za-z0-9]+)$`, 'i'),
@@ -43,10 +53,15 @@ function extractCardNumber(raw) {
     }
   }
 
-  const parts = value.split(/[\\/]+/).filter(Boolean);
-  const lastPart = parts[parts.length - 1] || '';
-  if (/^[A-Za-z0-9]+$/.test(lastPart)) {
-    return lastPart.toUpperCase();
+  const tokens = value.match(/[A-Za-z0-9]+/g) || [];
+  const digitToken = [...tokens].reverse().find(token => /\d/.test(token));
+  if (digitToken) {
+    return digitToken.toUpperCase();
+  }
+
+  const lastToken = tokens[tokens.length - 1] || '';
+  if (/^[A-Za-z0-9]+$/.test(lastToken)) {
+    return lastToken.toUpperCase();
   }
 
   return null;
@@ -187,7 +202,7 @@ export default function MapQrScannerModal({
         }, SCAN_COOLDOWN);
       }
     },
-    [handleValidated, helperId, latLng, line, showToast, wardNo],
+    [handleValidated, helperId, line, showToast, wardNo],
   );
 
   const codeScanner = useCodeScanner({
