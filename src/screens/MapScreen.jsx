@@ -605,7 +605,7 @@ export default function MapScreen({ route, navigation }) {
       {/* ── Top Panel ── */}
       <View style={s.topPanel}>
         <View style={s.topLeft}>
-          <Text style={s.title}>{payload.ward}</Text>
+          <Text style={s.title}>Ward {payload.ward}</Text>
           <Text style={s.subTitle}>
             {isLocating ? 'Location syncing...' : 'Live location active'}
           </Text>

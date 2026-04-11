@@ -25,8 +25,6 @@ import { useToast } from '../context/ToastContext';
 import { findHouseInWardLines, getWardLinesDynamic } from '../services/mapLineService';
 import { isCardAlreadyScanned, loadDailyScanCache } from '../services/scanCacheService';
 
-const SCAN_COOLDOWN = 2000;
-
 const escapeRegex = value => String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 function extractCardNumber(raw) {
@@ -79,7 +77,6 @@ export default function MapQrScannerModal({
   const insets = useSafeAreaInsets();
   const { hasPermission, requestPermission } = useCameraPermission();
   const device = useCameraDevice('back');
-  const scanLock = useRef(false);
   const lineAnim = useRef(new Animated.Value(0)).current;
   const dotAnim = useRef(new Animated.Value(1)).current;
   const [permRequested, setPermRequested] = useState(false);
@@ -89,7 +86,6 @@ export default function MapQrScannerModal({
 
   useEffect(() => {
     if (!visible) {
-      scanLock.current = false;
       setTorch(false);
       setPermRequested(false);
       return;
@@ -129,7 +125,6 @@ export default function MapQrScannerModal({
   }, [dotAnim, visible, hasPermission, device]);
 
   const closeModal = useCallback(() => {
-    scanLock.current = false;
     setTorch(false);
     onClose?.();
   }, [onClose]);
@@ -144,15 +139,13 @@ export default function MapQrScannerModal({
 
   const onCodeScanned = useCallback(
     async codes => {
-      if (scanLock.current || !codes.length) return;
+      if (!codes.length) return;
       const raw = codes[0].value;
       const cardNumber = extractCardNumber(raw);
       if (!cardNumber) {
         showToast('warning', 'Card Scan Again');
         return;
       }
-
-      scanLock.current = true;
       try {
         if (!wardNo) {
           showToast('error', 'Setup failed: Ward information missing.');
@@ -196,10 +189,6 @@ export default function MapQrScannerModal({
         });
       } catch (error) {
         showToast('error', error?.message || 'Unable to validate card');
-      } finally {
-        setTimeout(() => {
-          scanLock.current = false;
-        }, SCAN_COOLDOWN);
       }
     },
     [handleValidated, helperId, line, showToast, wardNo],
