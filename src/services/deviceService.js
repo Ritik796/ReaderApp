@@ -37,7 +37,7 @@ async function getOrCreateDeviceIdentity(prefix) {
   const existing = await getData(path);
   if (existing?.name) {
     const updatePayload = {
-      appType: '1',
+      appType: '2',
       readerAppVersion: appVersion,
       lastActive: now,
     };
@@ -71,7 +71,7 @@ async function getOrCreateDeviceIdentity(prefix) {
   const suffix = String(newNo).padStart(2, '0');
   const deviceName = `${getCityPrefix(prefix)}-${suffix}`;
   const createPayload = {
-    appType: '1',
+    appType: '2',
     status: '1',
     readerAppVersion: appVersion,
     lastActive: now,
