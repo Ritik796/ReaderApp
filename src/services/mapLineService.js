@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {CITY} from '../Firebase/firebaseConfig';
-import {purgeStaleDailyCaches} from './scanCacheService';
+import { CITY } from '../Firebase/firebaseConfig';
+import { purgeStaleDailyCaches } from './scanCacheService';
 
 const isValidPoint = point =>
   Array.isArray(point) &&
@@ -67,16 +67,16 @@ const normalizeWardLines = rawData => {
     })
     .map(([lineId, value]) => {
       const points = Array.isArray(value.points)
-        ? value.points
-            .filter(isValidPoint)
-            .map(([latitude, longitude]) => ({
-              latitude: Number(latitude),
-              longitude: Number(longitude),
-            }))
+        ? value.points.filter(isValidPoint).map(([latitude, longitude]) => ({
+            latitude: Number(latitude),
+            longitude: Number(longitude),
+          }))
         : [];
 
       const houses = Array.isArray(value.Houses)
-        ? value.Houses.map(house => normalizeHouse(house, lineId)).filter(Boolean)
+        ? value.Houses.map(house => normalizeHouse(house, lineId)).filter(
+            Boolean,
+          )
         : [];
 
       return {
@@ -97,7 +97,14 @@ const normalizeCardValue = value =>
 
 export const findHouseInWardLines = (wardLines = [], cardNumber = '') => {
   const target = normalizeCardValue(cardNumber);
+  console.log(
+    '[EXTRACT] Searching for card:',
+    target,
+    'Total lines:',
+    wardLines?.length,
+  );
   if (!target || !Array.isArray(wardLines)) {
+    console.log('[EXTRACT] Invalid input - returning not found');
     return {
       found: false,
       target,
@@ -107,14 +114,26 @@ export const findHouseInWardLines = (wardLines = [], cardNumber = '') => {
   }
 
   for (const line of wardLines) {
+    const lineId = line?.id || line?.lineId || 'unknown';
     const houses = Array.isArray(line?.houses) ? line.houses : [];
+    console.log('[EXTRACT] Line:', lineId, 'Houses:', houses.length);
+
     const match = houses.find(house => {
       const houseCard = normalizeCardValue(house?.cardNumber);
       const houseUid = normalizeCardValue(house?.uid);
+      console.log(
+        '[EXTRACT] Check - card:',
+        houseCard,
+        'uid:',
+        houseUid,
+        'target:',
+        target,
+      );
       return houseCard === target || houseUid === target;
     });
 
     if (match) {
+      console.log('[EXTRACT] FOUND in line:', lineId, 'House:', match);
       return {
         found: true,
         target,
@@ -179,15 +198,16 @@ const getCache = async zone => {
 export const getWardLinesDynamic = async zoneRaw => {
   const zone = String(zoneRaw || '').trim();
   if (!zone) {
-    console.log('[getWardLinesDynamic] blocked: empty zone');
-    return {ok: false, data: [], message: 'Invalid ward/zone'};
+    console.log('[EXTRACT] blocked: empty zone');
+    return { ok: false, data: [], message: 'Invalid ward/zone' };
   }
 
   await purgeStaleDailyCaches();
-  const {cacheKey, dateKey, cachedDate, cachedLines, dateOnly} = await getCache(zone);
+  const { cacheKey, dateKey, cachedDate, cachedLines, dateOnly } =
+    await getCache(zone);
   const cacheHasHouses = cachedLines.some(line => Array.isArray(line?.houses));
 
-  console.log('[getWardLinesDynamic] start', {
+  console.log('[EXTRACT] start', {
     zone,
     cachedDate,
     dateOnly,
@@ -197,7 +217,7 @@ export const getWardLinesDynamic = async zoneRaw => {
 
   try {
     if (cachedLines.length > 0 && cacheHasHouses) {
-      console.log('[getWardLinesDynamic] using daily cached lines', {
+      console.log('[EXTRACT] using daily cached lines', {
         zone,
         cacheKey,
         cachedLinesCount: cachedLines.length,
@@ -211,29 +231,37 @@ export const getWardLinesDynamic = async zoneRaw => {
       };
     }
 
-    const historyResp = await fetch(buildStorageUrl(zone, 'mapUpdateHistoryJson.json'));
+    const historyResp = await fetch(
+      buildStorageUrl(zone, 'mapUpdateHistoryJson.json'),
+    );
     if (!historyResp.ok) {
       throw new Error(`History fetch failed (${historyResp.status})`);
     }
     const historyPayload = await historyResp.json();
     const latestDate = parseHistoryDate(historyPayload);
 
-    console.log('[getWardLinesDynamic] history loaded', {
+    console.log('[EXTRACT] history loaded', {
       zone,
       latestDate,
       historyPayload,
     });
 
     if (!latestDate) {
-      console.log('[getWardLinesDynamic] no latest date, using cache if available', {
-        cacheLines: cachedLines.length,
-      });
+      console.log(
+        '[EXTRACT] no latest date, using cache if available',
+        {
+          cacheLines: cachedLines.length,
+        },
+      );
       return {
         ok: cachedLines.length > 0,
         data: cachedLines,
         latestDate: cachedDate,
         fromCache: cachedLines.length > 0,
-        message: cachedLines.length > 0 ? 'Using cached ward lines' : 'No map history found',
+        message:
+          cachedLines.length > 0
+            ? 'Using cached ward lines'
+            : 'No map history found',
       };
     }
 
@@ -244,7 +272,7 @@ export const getWardLinesDynamic = async zoneRaw => {
     const linePayload = await linesResp.json();
     const normalizedLines = normalizeWardLines(linePayload);
 
-    console.log('[getWardLinesDynamic] line json loaded', {
+    console.log('[EXTRACT] line json loaded', {
       zone,
       latestDate,
       rawLineKeys: Object.keys(linePayload || {}),
@@ -257,7 +285,7 @@ export const getWardLinesDynamic = async zoneRaw => {
     });
 
     if (normalizedLines.length === 0) {
-      console.log('[getWardLinesDynamic] invalid ward line format', {
+      console.log('[EXTRACT] invalid ward line format', {
         zone,
         latestDate,
       });
@@ -275,7 +303,7 @@ export const getWardLinesDynamic = async zoneRaw => {
       AsyncStorage.setItem(dateKey, latestDate),
     ]);
 
-    console.log('[getWardLinesDynamic] cache saved', {
+    console.log('[EXTRACT] cache saved', {
       zone,
       latestDate,
       normalizedLinesCount: normalizedLines.length,
@@ -289,7 +317,7 @@ export const getWardLinesDynamic = async zoneRaw => {
       message: 'Success',
     };
   } catch (error) {
-    console.log('[getWardLinesDynamic] error', {
+    console.log('[EXTRACT] error', {
       zone,
       message: error?.message,
       cachedLinesCount: cachedLines.length,

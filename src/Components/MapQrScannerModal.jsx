@@ -22,21 +22,32 @@ import { scale, mvs, ms } from '../utils/responsive';
 import appTheme from '../theme/appTheme';
 import { CITY } from '../Firebase/firebaseConfig';
 import { useToast } from '../context/ToastContext';
-import { findHouseInWardLines, getWardLinesDynamic } from '../services/mapLineService';
-import { isCardAlreadyScanned, loadDailyScanCache } from '../services/scanCacheService';
+import {
+  findHouseInWardLines,
+  getWardLinesDynamic,
+} from '../services/mapLineService';
+import {
+  isCardAlreadyScanned,
+  loadDailyScanCache,
+} from '../services/scanCacheService';
 
-const escapeRegex = value => String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const escapeRegex = value =>
+  String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 function extractCardNumber(raw) {
   const value = String(raw || '').trim();
   if (!value) return null;
 
+  console.log('[EXTRACT] Raw value:', value);
   const cityKey = String(CITY?.key || '').trim();
+  console.log('[EXTRACT] City key:', cityKey);
+
   const urlMatch = value.match(/https?:\/\/[^\s]+/i);
   if (urlMatch?.[0]) {
     const url = urlMatch[0].replace(/[),.;]+$/, '');
     const urlParts = url.split('/').filter(Boolean);
     const urlCard = urlParts[urlParts.length - 1] || '';
+    console.log('[EXTRACT] URL card:', urlCard);
     if (/^[A-Za-z0-9]+$/.test(urlCard)) {
       return urlCard.toUpperCase();
     }
@@ -47,11 +58,13 @@ function extractCardNumber(raw) {
       new RegExp(`(?:^|[\\/])${escapeRegex(cityKey)}[\\/](?<card>[A-Za-z0-9]+)$`, 'i'),
     );
     if (cityMatch?.groups?.card) {
+      console.log('[EXTRACT] City match:', cityMatch.groups.card);
       return cityMatch.groups.card.toUpperCase();
     }
   }
 
   const tokens = value.match(/[A-Za-z0-9]+/g) || [];
+  console.log('[EXTRACT] Tokens:', tokens);
   const digitToken = [...tokens].reverse().find(token => /\d/.test(token));
   if (digitToken) {
     return digitToken.toUpperCase();
@@ -59,6 +72,7 @@ function extractCardNumber(raw) {
 
   const lastToken = tokens[tokens.length - 1] || '';
   if (/^[A-Za-z0-9]+$/.test(lastToken)) {
+    console.log('[EXTRACT] Last token:', lastToken);
     return lastToken.toUpperCase();
   }
 
@@ -101,8 +115,16 @@ export default function MapQrScannerModal({
     if (visible && hasPermission && device) {
       Animated.loop(
         Animated.sequence([
-          Animated.timing(lineAnim, { toValue: 1, duration: 1800, useNativeDriver: true }),
-          Animated.timing(lineAnim, { toValue: 0, duration: 1800, useNativeDriver: true }),
+          Animated.timing(lineAnim, {
+            toValue: 1,
+            duration: 1800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(lineAnim, {
+            toValue: 0,
+            duration: 1800,
+            useNativeDriver: true,
+          }),
         ]),
       ).start();
     } else {
@@ -115,8 +137,16 @@ export default function MapQrScannerModal({
     if (visible && hasPermission && device) {
       Animated.loop(
         Animated.sequence([
-          Animated.timing(dotAnim, { toValue: 0.25, duration: 650, useNativeDriver: true }),
-          Animated.timing(dotAnim, { toValue: 1, duration: 650, useNativeDriver: true }),
+          Animated.timing(dotAnim, {
+            toValue: 0.25,
+            duration: 650,
+            useNativeDriver: true,
+          }),
+          Animated.timing(dotAnim, {
+            toValue: 1,
+            duration: 650,
+            useNativeDriver: true,
+          }),
         ]),
       ).start();
     } else {
@@ -141,7 +171,9 @@ export default function MapQrScannerModal({
     async codes => {
       if (!codes.length) return;
       const raw = codes[0].value;
+      console.log('[EXTRACT] Raw QR:', raw);
       const cardNumber = extractCardNumber(raw);
+      console.log('[EXTRACT] Card Number:', cardNumber);
       if (!cardNumber) {
         showToast('warning', 'Card Scan Again');
         return;
@@ -152,19 +184,28 @@ export default function MapQrScannerModal({
           return;
         }
 
+        console.log('[EXTRACT] Loading ward:', wardNo);
         const wardResp = await getWardLinesDynamic(wardNo);
-        if (!wardResp?.ok || !Array.isArray(wardResp.data) || wardResp.data.length === 0) {
+        console.log('[EXTRACT] Ward Response:', wardResp);
+        if (
+          !wardResp?.ok ||
+          !Array.isArray(wardResp.data) ||
+          wardResp.data.length === 0
+        ) {
           showToast('warning', 'Ward JSON load नहीं हो सका. Please try again.');
           return;
         }
+        console.log('[EXTRACT] Ward lines count:', wardResp.data.length);
 
         const match = findHouseInWardLines(wardResp.data, cardNumber);
+        console.log('[EXTRACT] Match result:', match);
         if (!match.found) {
           showToast('warning', `Card Not Found: ${cardNumber}`);
           return;
         }
 
         const dailyCache = await loadDailyScanCache({ wardNo });
+        console.log('[EXTRACT] Daily cache:', dailyCache);
         if (
           isCardAlreadyScanned(
             dailyCache,
@@ -180,6 +221,11 @@ export default function MapQrScannerModal({
           ? `${match.matchedHouse.latitude},${match.matchedHouse.longitude}`
           : '';
 
+        console.log('[EXTRACT] SUCCESS - Validated:', {
+          cardNumber,
+          wardNo,
+          houseLatLng,
+        });
         handleValidated({
           cardNumber,
           wardNo,
@@ -188,6 +234,7 @@ export default function MapQrScannerModal({
           latLng: houseLatLng,
         });
       } catch (error) {
+        console.log('[EXTRACT] Error:', error);
         showToast('error', error?.message || 'Unable to validate card');
       }
     },
@@ -201,12 +248,19 @@ export default function MapQrScannerModal({
 
   useEffect(() => {
     if (visible) {
-      Animated.timing(fadeAnim, { toValue: 1, duration: 250, useNativeDriver: true }).start();
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 250,
+        useNativeDriver: true,
+      }).start();
       const handleBack = () => {
         closeModal();
         return true;
       };
-      const subscription = BackHandler.addEventListener('hardwareBackPress', handleBack);
+      const subscription = BackHandler.addEventListener(
+        'hardwareBackPress',
+        handleBack,
+      );
       return () => subscription.remove();
     } else {
       fadeAnim.setValue(0);
@@ -236,7 +290,8 @@ export default function MapQrScannerModal({
         </Text>
         <Pressable
           style={({ pressed }) => [s.permBtn, pressed && { opacity: 0.85 }]}
-          onPress={() => requestPermission()}>
+          onPress={() => requestPermission()}
+        >
           {permRequested ? (
             <ActivityIndicator size="small" color="#fff" />
           ) : (
@@ -281,7 +336,11 @@ export default function MapQrScannerModal({
 
     modalContent = (
       <View style={s.root}>
-        <StatusBar barStyle="light-content" backgroundColor="#000" translucent />
+        <StatusBar
+          barStyle="light-content"
+          backgroundColor="#000"
+          translucent
+        />
 
         <Camera
           style={StyleSheet.absoluteFill}
@@ -335,8 +394,13 @@ export default function MapQrScannerModal({
             s.backBtn,
             pressed && s.iconBtnPressed,
           ]}
-          onPress={closeModal}>
-          <MaterialCommunityIcons name="arrow-left" size={scale(20)} color="#fff" />
+          onPress={closeModal}
+        >
+          <MaterialCommunityIcons
+            name="arrow-left"
+            size={scale(20)}
+            color="#fff"
+          />
         </Pressable>
 
         {/* ── Title ── */}
@@ -353,7 +417,8 @@ export default function MapQrScannerModal({
             torch && s.torchActive,
             pressed && s.iconBtnPressed,
           ]}
-          onPress={() => setTorch(v => !v)}>
+          onPress={() => setTorch(v => !v)}
+        >
           <MaterialCommunityIcons
             name={torch ? 'flashlight' : 'flashlight-off'}
             size={scale(20)}
@@ -365,7 +430,12 @@ export default function MapQrScannerModal({
   }
 
   return (
-    <Animated.View style={[StyleSheet.absoluteFill, { zIndex: 999, elevation: 99, opacity: fadeAnim }]}>
+    <Animated.View
+      style={[
+        StyleSheet.absoluteFill,
+        { zIndex: 999, elevation: 99, opacity: fadeAnim },
+      ]}
+    >
       {modalContent}
     </Animated.View>
   );
