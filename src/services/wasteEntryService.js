@@ -272,10 +272,11 @@ export const saveScanDetails = async ({
     cardPath: `${basePath}/${safeCardNumber}`,
   });
 
-  if (wasteCategory === 'Segregated' && photoPath) {
-    console.log('[saveScanDetails] segregated image queued in background', {
+  if (photoPath) {
+    console.log('[saveScanDetails] waste image queued in background', {
       photoPath,
       cardNumber: safeCardNumber,
+      wasteCategory,
     });
     syncSegregatedImageInBackground({
       basePath,

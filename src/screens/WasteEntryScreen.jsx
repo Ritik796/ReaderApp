@@ -25,24 +25,47 @@ import {useToast} from '../context/ToastContext';
 
 const WASTE_TYPES = [
   {
-    id: 'segregated',
-    value: 'Segregated',
-    label: 'Segregated',
-    icon: 'recycle',
+    id: 'two_bin',
+    value: 'Two Bin Segregation',
+    label: 'Two Bin Segregation',
+    icon: 'trash-can-outline',
+    binCount: 2,
     color: '#2E7D32',
     bgColor: '#E8F5E9',
     borderColor: '#A5D6A7',
     requiresPhoto: true,
   },
   {
-    id: 'non_segregated',
-    value: 'Non-Segregated',
-    label: 'Non-Segregated',
+    id: 'three_bin',
+    value: 'Three Bin Segregation',
+    label: 'Three Bin Segregation',
+    icon: 'trash-can-outline',
+    binCount: 3,
+    color: '#1565C0',
+    bgColor: '#E3F2FD',
+    borderColor: '#90CAF9',
+    requiresPhoto: true,
+  },
+  {
+    id: 'four_bin',
+    value: 'Four Bin Segregation',
+    label: 'Four Bin Segregation',
+    icon: 'trash-can-outline',
+    binCount: 4,
+    color: '#6A1B9A',
+    bgColor: '#F3E5F5',
+    borderColor: '#CE93D8',
+    requiresPhoto: true,
+  },
+  {
+    id: 'no_segregation',
+    value: 'No Segregation',
+    label: 'No Segregation',
     icon: 'trash-can-outline',
     color: '#E65100',
     bgColor: '#FFF3E0',
     borderColor: '#FFCC80',
-    requiresPhoto: false,
+    requiresPhoto: true,
   },
   {
     id: 'no_waste',
@@ -55,6 +78,8 @@ const WASTE_TYPES = [
     requiresPhoto: false,
   },
 ];
+
+const getWasteTypeById = id => WASTE_TYPES.find(item => item.id === id);
 
 function CapturingOverlay() {
   const flashAnim = useRef(new Animated.Value(1)).current;
@@ -272,8 +297,8 @@ export default function WasteEntryScreen({route, navigation}) {
   const onSelectType = type => {
     console.log('[WasteEntryScreen] waste type selected', {type});
     setSelectedType(type);
-    // Clear photo if switching away from segregated
-    if (type !== 'segregated') {
+    const next = getWasteTypeById(type);
+    if (!next?.requiresPhoto) {
       cleanupPhotoIfNeeded(photoCleanupPath);
       setPhotoPath(null);
       setPhotoCleanupPath(null);
@@ -359,9 +384,11 @@ export default function WasteEntryScreen({route, navigation}) {
     return uri.startsWith('file://') ? uri : `file://${uri}`;
   };
 
+  const selectedTypeMeta = getWasteTypeById(selectedType);
+  const needsPhoto = !!selectedTypeMeta?.requiresPhoto;
   const canSave =
     selectedType !== null &&
-    (selectedType !== 'segregated' || photoPath !== null) &&
+    (!needsPhoto || photoPath !== null) &&
     !processingPhoto &&
     !saving;
 
@@ -374,7 +401,10 @@ export default function WasteEntryScreen({route, navigation}) {
 
       {/* ── Header ── */}
       <View style={s.header}>
-        <Pressable style={s.backBtn} onPress={() => navigation.goBack()}>
+        <Pressable
+          style={[s.backBtn, saving && s.disabledControl]}
+          onPress={() => navigation.goBack()}
+          disabled={saving}>
           <MaterialCommunityIcons
             name="arrow-left"
             size={scale(20)}
@@ -409,21 +439,25 @@ export default function WasteEntryScreen({route, navigation}) {
 
         {/* ── Waste type tiles ── */}
         <View style={s.tilesRow}>
-          {WASTE_TYPES.map(type => {
+          {WASTE_TYPES.map((type, idx) => {
             const active = selectedType === type.id;
+            const isLast =
+              idx === WASTE_TYPES.length - 1 && WASTE_TYPES.length % 2 === 1;
             return (
               <Pressable
                 key={type.id}
                 style={({pressed}) => [
                   s.tile,
+                  isLast && s.tileFullWidth,
                   {
                     backgroundColor: active ? type.bgColor : appTheme.colors.surfacePrimary,
                     borderColor: active ? type.color : appTheme.colors.surfaceBorder,
                     borderWidth: active ? 2 : 1,
-                    opacity: pressed ? 0.82 : 1,
+                    opacity: saving ? 0.5 : pressed ? 0.82 : 1,
                   },
                 ]}
-                onPress={() => onSelectType(type.id)}>
+                onPress={() => onSelectType(type.id)}
+                disabled={saving}>
                 <View
                   style={[
                     s.tileIconWrap,
@@ -434,6 +468,19 @@ export default function WasteEntryScreen({route, navigation}) {
                     size={scale(26)}
                     color={active ? type.color : appTheme.colors.textSecondary}
                   />
+                  {type.binCount ? (
+                    <View
+                      style={[
+                        s.binCountBadge,
+                        {
+                          backgroundColor: active
+                            ? type.color
+                            : appTheme.colors.textSecondary,
+                        },
+                      ]}>
+                      <Text style={s.binCountText}>{type.binCount}</Text>
+                    </View>
+                  ) : null}
                 </View>
                 <Text
                   style={[
@@ -456,12 +503,12 @@ export default function WasteEntryScreen({route, navigation}) {
           })}
         </View>
 
-        {/* ── Photo section (Segregated only) ── */}
-        {selectedType === 'segregated' && (
+        {/* ── Photo section (only when selected type requires photo) ── */}
+        {needsPhoto && (
           <View style={s.photoSection}>
             <Text style={s.sectionTitle}>Waste Photo</Text>
             <Text style={s.photoHint}>
-              Photo is required for Segregated waste
+              Photo is required for {selectedTypeMeta?.label}
             </Text>
 
             {processingPhoto ? (
@@ -480,8 +527,9 @@ export default function WasteEntryScreen({route, navigation}) {
                   resizeMode="cover"
                 />
                 <Pressable
-                  style={s.retakeBtn}
-                  onPress={() => setCameraOpen(true)}>
+                  style={[s.retakeBtn, saving && s.disabledControl]}
+                  onPress={() => setCameraOpen(true)}
+                  disabled={saving}>
                   <MaterialCommunityIcons
                     name="camera-retake-outline"
                     size={scale(16)}
@@ -492,8 +540,13 @@ export default function WasteEntryScreen({route, navigation}) {
               </View>
             ) : (
               <Pressable
-                style={({pressed}) => [s.captureBtn, pressed && {opacity: 0.8}]}
-                onPress={() => setCameraOpen(true)}>
+                style={({pressed}) => [
+                  s.captureBtn,
+                  saving && s.disabledControl,
+                  pressed && !saving && {opacity: 0.8},
+                ]}
+                onPress={() => setCameraOpen(true)}
+                disabled={saving}>
                 <MaterialCommunityIcons
                   name="camera-plus-outline"
                   size={scale(28)}
@@ -806,12 +859,15 @@ const s = StyleSheet.create({
   // Waste type tiles
   tilesRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: scale(10),
   },
   tile: {
-    flex: 1,
+    width: '48%',
+    flexGrow: 1,
     borderRadius: scale(14),
     paddingVertical: mvs(14),
+    paddingHorizontal: scale(8),
     alignItems: 'center',
     gap: mvs(8),
     position: 'relative',
@@ -821,12 +877,39 @@ const s = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: scale(4),
   },
+  tileFullWidth: {
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: scale(10),
+    paddingVertical: mvs(12),
+  },
   tileIconWrap: {
     width: scale(48),
     height: scale(48),
     borderRadius: scale(12),
     alignItems: 'center',
     justifyContent: 'center',
+    position: 'relative',
+  },
+  binCountBadge: {
+    position: 'absolute',
+    bottom: -scale(2),
+    right: -scale(4),
+    minWidth: scale(18),
+    height: scale(18),
+    borderRadius: scale(9),
+    paddingHorizontal: scale(4),
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: appTheme.colors.surfacePrimary,
+  },
+  binCountText: {
+    color: '#fff',
+    fontSize: ms(10),
+    fontWeight: '800',
+    lineHeight: ms(12),
   },
   tileLabel: {
     fontSize: ms(10),
@@ -931,6 +1014,9 @@ const s = StyleSheet.create({
     backgroundColor: appTheme.colors.textMuted,
     elevation: 0,
     shadowOpacity: 0,
+  },
+  disabledControl: {
+    opacity: 0.5,
   },
   saveBtnText: {
     fontSize: ms(14),
