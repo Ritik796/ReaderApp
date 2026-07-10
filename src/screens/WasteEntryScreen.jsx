@@ -75,7 +75,7 @@ const WASTE_TYPES = [
     color: '#546E7A',
     bgColor: '#ECEFF1',
     borderColor: '#B0BEC5',
-    requiresPhoto: false,
+    requiresPhoto: true,
   },
 ];
 
