@@ -157,6 +157,14 @@ const normalizeRecord = (value, key) => {
   const cardNumber = String(value.cardNumber || value.cardNo || key || '').trim().toUpperCase();
   if (!cardNumber) return null;
 
+  // Scans made by OTHER apps carry no wasteCategory — ignore them entirely so
+  // this app's scanned counts / map markers only reflect scans that went
+  // through this app's waste-entry flow (which always saves a category).
+  const wasteCategory = String(value.wasteCategory || '').trim();
+  if (!wasteCategory) {
+    return null;
+  }
+
   const scanBy = String(value.scanBy || '').trim();
   const hasValidScanBy = !INVALID_SCAN_BY_VALUES.has(scanBy.toLowerCase());
   const hasScannedFlag = String(value.isScanned || '')
@@ -179,7 +187,7 @@ const normalizeRecord = (value, key) => {
     scanBy,
     scanTime: String(value.scanTime || '').trim(),
     latLng: String(value.latLng || '').trim(),
-    wasteCategory: String(value.wasteCategory || '').trim(),
+    wasteCategory,
     imgName: String(value.imgName || '').trim(),
     isScanned: true,
     updatedAt: String(value.updatedAt || new Date().toISOString()),
